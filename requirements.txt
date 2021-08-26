@@ -1,0 +1,7 @@
+compare
+data
+ipython
+matplotlib
+numpy
+pandas
+streamlit
