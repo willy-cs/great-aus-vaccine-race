@@ -65,6 +65,7 @@ def extra_calculation(a):
     a['delta_dose2'] = a['dose2_cnt'].diff()
     a['delta_dose12'] = a['delta_dose1'] + a['delta_dose2']
     a['vac_rate'] = round(a['delta_dose12'] / a['abspop_jun2020'] * 100, 2)
+    a['vac_rate'] = a['vac_rate'].clip(0)
 
 
     # modified delta, cap the minus values in delta into 0.
