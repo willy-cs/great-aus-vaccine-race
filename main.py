@@ -59,4 +59,5 @@ if __name__ == "__main__":
 
     st.subheader('Notes')
     st.markdown('1. Prediction on reaching 70 or 80% fully vaccinated status is based on 7-day moving average')
-    st.markdown('2. Data is taken from ..')
+    st.markdown('2. My source data is from https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf. I might have modified the data to correct any mistakes or errors I perceive or notice')
+    st.markdown('3. This page does not aim or claim to be authoritative of vaccine data roll out. I do not guarantee its accuracy. Use at your own risk, and I take no responsibility of any loss that might have occurred.')
