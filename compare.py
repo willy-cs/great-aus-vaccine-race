@@ -83,7 +83,7 @@ On {latest_date}, {s['vac_rate']}% of {user.age_group} in {user.state} got a jab
 Comparing to the same age group in other states and territories, {user.age_group} in {user.state}:
     Rank #{s_out['vac_rate_rank']} ({s['vac_rate']}%) on the speed of vaccine rollout. {best_state_vac_rate_str}
     Rank #{s_out['dose1_rank']} ({s['dose1_pct']}%) of being half vaccinated. {best_state_dose1_str}
-    Rank #{s_out['dose1_rank']} ({s['dose2_pct']}%) of being fully vaccinated. {best_state_dose2_str}
+    Rank #{s_out['dose2_rank']} ({s['dose2_pct']}%) of being fully vaccinated. {best_state_dose2_str}
 """
     if (s['eta_dose2_70_y'] <= s['date'] and s['eta_dose2_80_y'] > s['date']): # reached 70%, but not 80%
         output_str+=f"""    Rank #{s_out['eta_dose2_70_rank']} in terms of reaching the 70/80% mark of being fully vaccinated. You have reached the 70% fully vaccinated mark on {pd.to_datetime(s['eta_dose2_70_y']).date()}, and will reach the 80% mark on {pd.to_datetime(s['eta_dose2_80_y']).date()}. {best_state_eta_str}"""
