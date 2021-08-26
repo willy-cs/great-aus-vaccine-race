@@ -29,12 +29,9 @@ st.set_page_config(page_title='It is a race!', layout='wide')
 if __name__ == "__main__":
     st.header("Welcome to the Great Australian COVID Vaccine Race!")
 
-    # while True:
-    #     data.update_data()
-    #     time.sleep()
-
-    overall_state_df = st.cache(pd.read_parquet)('overall_state_df.parquet')
-    sag_df = st.cache(pd.read_parquet)('sag_df.parquet')
+    (overall_state_df, sag_df) = data.update_data()
+    # overall_state_df = st.cache(pd.read_parquet)('overall_state_df.parquet')
+    # sag_df = st.cache(pd.read_parquet)('sag_df.parquet')
 
     st.subheader("Choose your team")
 

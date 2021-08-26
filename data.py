@@ -99,16 +99,15 @@ def save_data(df):
     sag_df.drop(columns = ['first_dose_count', 'second_dose_count'], inplace = True)
     sag_df = sag_df.groupby(['state', 'age_group']).apply(lambda d: extra_calculation(d))
 
-    overall_state_df.to_parquet('overall_state_df.parquet')
-    sag_df.to_parquet('sag_df.parquet')
+    # overall_state_df.to_parquet('overall_state_df.parquet')
+    # sag_df.to_parquet('sag_df.parquet')
 
-    return
+    return (overall_state_df, sag_df)
 
 def update_data():
     df = get_data()
     df = age_grouping(df)
-    save_data(df)
-
+    return save_data(df)
 
 if __name__ == '__main__':
     df = get_data()
