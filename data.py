@@ -5,6 +5,7 @@ import numpy as np
 import datetime
 import sys
 import os
+import streamlit as st
 
 import matplotlib.pyplot as plt
 
@@ -113,6 +114,7 @@ def save_data(df):
 
     return (overall_state_df, overall_ag_df, sag_df)
 
+@st.cache(suppress_st_warning=True, ttl=600)
 def update_data():
     df = get_data()
     df = age_grouping(df)
