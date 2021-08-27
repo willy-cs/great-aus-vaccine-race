@@ -33,10 +33,15 @@ def state_comparison(user, overall_state_df):
     user_state_vac_count, user_state_vac_pp, user_state_vac_count_str = vaccine_count_colname[user.vac_status]
 
     best_state = as_df[['state', 'vac_rate']].to_dict(orient = 'records')[0] # first elem of a sorted df, always gives you the best state
-    best_state_vac_rate_str = f"""Keep it up!""" if best_state['state'] == user.state else f"""The best state is {best_state['state']}, which administered vaccines to {best_state['vac_rate']}% of its population."""
 
     (best_state_vac_rate_str, best_state_dose1_str, best_state_dose2_str, best_state_eta_str) = best_state_strs(user, s, as_df)
     latest_date = pd.to_datetime(s['date']).date()
+
+    comment = dict()
+    comment['state_vac_status'] = f"""As of {latest_date}, you are one of the {int(s[user_state_vac_count])} ({s[user_state_vac_pp]}%) who {user_state_vac_count_str} out of the {s['abspop_jun2020']} over 16 population in {user.state}"""
+    comment['state_vac_rate'] = f"""On {latest_date}, {user.state} administered {int(s['delta_dose12'])} vaccines -- {s['vac_rate']}% of its over 16 population. It is ranked #{s['vac_rate_rank']}."""
+    comment['state_dose1'] = f"""On {latest_date}, {s['dose1_pct']}% of {user.state} over 16 population has had their first vaccine. It is ranked #{s['dose1_rank']}."""
+    comment['state_dose2'] = f"""On {latest_date}, {s['dose2_pct']}% of {user.state} over 16 population has been fully vaccinated. It is ranked #{s['dose2_rank']}."""
 
     output_str = f"""
 As of {latest_date}, you are one of the {int(s[user_state_vac_count])} ({s[user_state_vac_pp]}%) who {user_state_vac_count_str} out of the {s['abspop_jun2020']} over 16 population in {user.state}
@@ -51,9 +56,9 @@ On {latest_date}, {user.state} administered {int(s['delta_dose12'])} vaccines --
     else: # not reached 70%
         output_str+=f"""Using 7-day moving average second dose rate, {user.state} will reach the 70% mark on {pd.to_datetime(s['eta_dose2_70_y']).date()}, and 80% mark on {pd.to_datetime(s['eta_dose2_80_y']).date()}. It is ranked #{s['eta_dose2_70_rank']}. {best_state_eta_str}
 """
-    return output_str
+    return output_str, comment
 
-def user_age_group_comparison(user, sag_df):
+def state_age_group_comparison(user, sag_df):
     ag_df = get_latest(sag_df)
     ag_df = ag_df.query('state == @user.state | age_group == @user.age_group')
 
@@ -67,15 +72,27 @@ def user_age_group_comparison(user, sag_df):
     vaccine_count_colname = {0: ('unvac', 'unvac_pct', 'are not yet vaccinated'),
                              1: ('dose1_cnt', 'dose1_pct', 'have received 1 dose of vaccine'),
                              2: ('dose2_cnt', 'dose2_pct', 'have been fully vaccinated')}
-    user_state_vac_count, user_state_vac_pp, user_state_vac_count_str = vaccine_count_colname[user.vac_status]
+    user_vac_count, user_vac_pp, user_vac_count_str = vaccine_count_colname[user.vac_status]
     #print(ag_in_state_df)
     # print(ag_out_state_df)
+
 
     (best_state_vac_rate_str, best_state_dose1_str, best_state_dose2_str, best_state_eta_str) = best_state_strs(user, s_out, ag_out_state_df, age_group=True)
     latest_date = pd.to_datetime(s['date']).date()
 
+    comment = dict()
+    comment['sag_in_vac_status'] = f"""As of {latest_date}, you are one of the {int(s[user_vac_count])} ({s[user_vac_pp]}%) who {user_vac_count_str} in the {user.age_group} age group living in {user.state}."""
+
+    comment['sag_in_vac_rate'] = f"""On {latest_date}, {s['vac_rate']}% of {user.age_group} age group in {user.state} were administered a jab. It is ranked #{s['vac_rate_rank']}."""
+    comment['sag_in_dose1'] = f"""On {latest_date}, {s['dose1_pct']}% of {user.age_group} age group in {user.state} has had their first vaccine. It is ranked #{s['dose1_rank']}."""
+    comment['sag_in_dose2'] = f"""On {latest_date}, {s['dose2_pct']}% of {user.age_group} age group in {user.state} has been fully vaccinated. It is ranked #{s['dose2_rank']}."""
+
+    comment['sag_out_vac_rate'] = f"""Rank #{s_out['vac_rate_rank']} ({s['vac_rate']}%) on the speed of vaccine rollout."""
+    comment['sag_out_dose1'] = f"""Rank #{s_out['dose1_rank']} ({s['dose1_pct']}%) of being half vaccinated."""
+    comment['sag_out_dose2'] = f"""Rank #{s_out['dose2_rank']} ({s['dose2_pct']}%) of being fully vaccinated."""
+
     output_str = f"""
-As of {latest_date}, you are one of the {int(s[user_state_vac_count])} ({s[user_state_vac_pp]}%) who {user_state_vac_count_str} in the {user.age_group} age group living in {user.state}.
+As of {latest_date}, you are one of the {int(s[user_vac_count])} ({s[user_vac_pp]}%) who {user_vac_count_str} in the {user.age_group} age group living in {user.state}.
 On {latest_date}, {s['vac_rate']}% of {user.age_group} in {user.state} got a jab. It is ranked #{s['vac_rate_rank']} out of {total_ag}.
            {s['dose1_pct']}% of {user.age_group} in {user.state} has had their first vaccine. It is ranked #{s['dose1_rank']} out of {total_ag}.
            {s['dose2_pct']}% of {user.age_group} in {user.state} has been fully vaccinated. It is ranked #{s['dose1_rank']} out of {total_ag}.
@@ -92,7 +109,7 @@ Comparing to the same age group in other states and territories, {user.age_group
     else: # not reached 70%
         output_str+=f"""    Rank #{s_out['eta_dose2_70_rank']} in terms of reaching the 70/80% mark of being fully vaccinated. You are predicted to reach 70% mark on {pd.to_datetime(s['eta_dose2_70_y']).date()}, 80% mark on {pd.to_datetime(s['eta_dose2_80_y']).date()}. {best_state_eta_str}"""
 
-    return output_str
+    return output_str, comment
 
 def best_state_strs(user, s, c_df, age_group=False):
     """
@@ -145,6 +162,30 @@ def best_state_strs(user, s, c_df, age_group=False):
 
     return (best_state_vac_rate_str, best_state_dose1_str, best_state_dose2_str, best_state_eta_str)
 
+
+def ag_comparison(user, overall_ag_df):
+    aag_df = get_latest(overall_ag_df)
+    aag_df = rank_columns(aag_df)
+    s = aag_df.query('age_group==@user.age_group').to_dict(orient = 'records')[0]
+    vaccine_count_colname = {0: ('unvac', 'unvac_pct', 'are not yet vaccinated'),
+                             1: ('dose1_cnt', 'dose1_pct', 'have received 1 dose of vaccine'),
+                             2: ('dose2_cnt', 'dose2_pct', 'have been fully vaccinated')}
+    user_ag_vac_count, user_ag_vac_pp, user_ag_vac_count_str = vaccine_count_colname[user.vac_status]
+
+    best_ag = aag_df[['age_group', 'vac_rate']].to_dict(orient = 'records')[0] # first elem of a sorted df, always gives you the best ag
+
+    latest_date = pd.to_datetime(s['date']).date()
+
+    comment = dict()
+    comment['ag_vac_status'] = f"""As of {latest_date}, you are one of the {int(s[user_ag_vac_count])} ({s[user_ag_vac_pp]}%) who {user_ag_vac_count_str} out of the {s['abspop_jun2020']} in {user.age_group} age group"""
+    comment['ag_vac_rate'] = f"""On {latest_date}, {s['vac_rate']}% of {user.age_group} age group were administered a jab. It is ranked #{s['vac_rate_rank']}."""
+    comment['ag_dose1'] = f"""On {latest_date}, {s['dose1_pct']}% of {user.age_group} age group has had their first vaccine. It is ranked #{s['dose1_rank']}."""
+    comment['ag_dose2'] = f"""On {latest_date}, {s['dose2_pct']}% of {user.age_group} age group has been fully vaccinated. It is ranked #{s['dose2_rank']}."""
+
+    return comment
+
+
+
 class User:
     def __init__(self, state='VIC', age_group='35-39', vac_status=1):
         self.state=state
@@ -152,6 +193,7 @@ class User:
         self.vac_status=vac_status
     def __repr__(self):
         return f"""State: {self.state}; Age Group: {self.age_group} ; Number of COVID vaccine dose received: {self.vac_status} """
+
 def get_latest(df):
     date_max = df['date'].max()
     return df.query('date == @date_max')

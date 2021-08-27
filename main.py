@@ -8,6 +8,7 @@ import sys
 import os
 import compare
 import data
+import chart
 
 import matplotlib.pyplot as plt
 import plotly.express as px
@@ -30,8 +31,9 @@ st.set_page_config(page_title='It is a race!', layout='wide')
 if __name__ == "__main__":
     st.header("Welcome to the Great Australian COVID-19 Vaccine Race!")
 
-    (overall_state_df, sag_df) = data.update_data()
+    (overall_state_df, overall_ag_df, sag_df) = data.update_data()
     # overall_state_df = st.cache(pd.read_parquet)('overall_state_df.parquet')
+    # overall_ag_df = st.cache(pd.read_parquet)('overall_ag_df.parquet')
     # sag_df = st.cache(pd.read_parquet)('sag_df.parquet')
 
     st.subheader("Choose your team")
@@ -39,86 +41,152 @@ if __name__ == "__main__":
     list_states = list(sorted(overall_state_df['state'].unique()))
     list_age_group = list(sorted(sag_df['age_group'].unique()))
     list_vac_status = [0,1,2]
+    list_vac_status_pp = ['unvac_pct', 'dose1_pct', 'dose2_pct']
 
     u_state = st.selectbox('Where do you live?', list_states)
     u_age_group = st.selectbox('What is your age group?', list_age_group)
     u_vac = st.selectbox('How many vaccine shots have you had?', list_vac_status)
+    hl_graph = st.selectbox('Highlight your team performance?', [True, False])
 
     user = compare.User(u_state, u_age_group, u_vac)
+    latest_date = pd.to_datetime(overall_state_df['date'].max()).date()
 
     st.text("Your team is: {}".format(user))
 
-    st.subheader('Here is how your team is doing so far in the vaccine race (last updated: {})'.format(pd.to_datetime(overall_state_df['date'].max()).date()))
 
-    st.text("You and your state")
+    st.subheader('Here is how your team is doing so far in the vaccine race')
+    st.subheader('Data last updated: {}'.format(pd.to_datetime(overall_state_df['date'].max()).date()))
 
-    st.text("{}".format(compare.state_comparison(user, overall_state_df)))
+    st.markdown("### *You and your state*")
+    long_com, short_com = compare.state_comparison(user, overall_state_df)
 
-    st.text("You and your age group")
+    state_df=overall_state_df.query('state==@user.state')
+    # 1. state vaccination status
+    st.markdown("> {}".format(short_com['state_vac_status']))
+    st.plotly_chart(chart.vac_status_dist_chart(state_df, user, hl=hl_graph), use_container_width=True)
 
-    st.text("{}".format(compare.user_age_group_comparison(user, sag_df)))
+    # 2. state vaccination rate
+    st.markdown("> {}".format(short_com['state_vac_rate']))
+    st.plotly_chart(chart.pp_chart(overall_state_df, user,
+                                    col='vac_rate',
+                                    col_label='vaccination rate',
+                                    grouping='state',
+                                    hl=hl_graph), use_container_width=True)
 
+    # 3. state dose1
+    st.markdown("> {}".format(short_com['state_dose1']))
+    st.plotly_chart(chart.pp_chart(overall_state_df, user,
+                                    col='dose1_pct',
+                                    col_label='1st dose pct',
+                                    grouping='state',
+                                    hl=hl_graph), use_container_width=True)
 
+    # 4. state dose2
+    st.markdown("> {}".format(short_com['state_dose2']))
+    st.plotly_chart(chart.pp_chart(overall_state_df, user,
+                                    col='dose2_pct',
+                                    col_label='2nd dose pct',
+                                    grouping='state',
+                                    hl=hl_graph), use_container_width=True)
+
+    st.markdown("### *You and your age group*")
+    short_com = compare.ag_comparison(user, overall_ag_df)
+    ag_df=overall_ag_df.query('age_group==@user.age_group')
+
+    # 1. age group vaccination status
+    st.markdown("> {}".format(short_com['ag_vac_status']))
+    st.plotly_chart(chart.vac_status_dist_chart(ag_df, user, hl=hl_graph), use_container_width=True)
+
+    # 2. age group vaccination rate
+    st.markdown("> {}".format(short_com['ag_vac_rate']))
+    st.plotly_chart(chart.pp_chart(overall_ag_df, user,
+                                    col='vac_rate',
+                                    col_label='vaccination rate',
+                                    grouping='age_group',
+                                    hl=hl_graph), use_container_width=True)
+    # 3. age group dose1
+    st.markdown("> {}".format(short_com['ag_dose1']))
+    st.plotly_chart(chart.pp_chart(overall_ag_df, user,
+                                    col='dose1_pct',
+                                    col_label='1st dose pct',
+                                    grouping='age_group',
+                                    hl=hl_graph), use_container_width=True)
+    # 4. age group dose2
+    st.markdown("> {}".format(short_com['ag_dose2']))
+    st.plotly_chart(chart.pp_chart(overall_ag_df, user,
+                                    col='dose2_pct',
+                                    col_label='2nd dose pct',
+                                    grouping='age_group',
+                                    hl=hl_graph), use_container_width=True)
+
+    # st.text("{}".format(compare.user_age_group_comparison(user, sag_df)))
     #################
-    # this one works
-    # st.line_chart(overall_state_df.query('state== @user.state') \
-    #         .set_index('date')[['unvac_pct', 'dose1_pct', 'dose2_pct']])
 
-    vac_status_dist_chart = px.line(overall_state_df.query('state== @user.state'),\
-                            x='date',  y=['dose1_pct','dose2_pct','unvac_pct'])
-    vac_status_dist_chart.update_traces({'line' : {'color': 'lightgrey'}})
-    vac_status_dist_chart.update_traces(patch={'line' : {'color': 'blue'}}, selector={'legendgroup': 'dose2_pct'})
-    st.plotly_chart(vac_status_dist_chart, use_container_width=True)
+    st.markdown("### *Your age group vs other age group within your state*")
+    long_com, short_com = compare.state_age_group_comparison(user, sag_df)
+    comp_sag_df=sag_df.query('state==@user.state & age_group==@user.age_group')
+    comp_s_df=sag_df.query('state==@user.state')
+    comp_ag_df=sag_df.query('age_group==@user.age_group')
 
-    vac_rate_chart = px.line(overall_state_df, x='date', y='vac_rate', color = 'state')
-    vac_rate_chart.update_traces({'line' : {'color': 'lightgrey'}})
-    vac_rate_chart.update_traces(patch={'line' : {'color': 'blue'}}, selector={'legendgroup': user.state})
-    st.plotly_chart(vac_rate_chart, use_container_width=True)
+    # 1. sag vaccination status
+    st.markdown("> {}".format(short_com['sag_in_vac_status']))
+    st.plotly_chart(chart.vac_status_dist_chart(comp_sag_df, user, hl=hl_graph), use_container_width=True)
 
-    dose1_pp_chart = px.line(overall_state_df, x='date', y='dose1_pct', color = 'state')
-    st.plotly_chart(dose1_pp_chart, use_container_width=True)
+    # 2. sag in vaccination rate
+    st.markdown("> {}".format(short_com['sag_in_vac_rate']))
+    st.plotly_chart(chart.pp_chart(comp_s_df, user,
+                                    col='vac_rate',
+                                    col_label='vaccination rate',
+                                    grouping='age_group',
+                                    hl=hl_graph), use_container_width=True)
+    # 3. sag in dose1
+    st.markdown("> {}".format(short_com['sag_in_dose1']))
+    st.plotly_chart(chart.pp_chart(overall_ag_df, user,
+                                    col='dose1_pct',
+                                    col_label='1st dose pct',
+                                    grouping='age_group',
+                                    hl=hl_graph), use_container_width=True)
 
-    dose2_pp_chart = px.line(overall_state_df, x='date', y='dose2_pct', color = 'state')
-    st.plotly_chart(dose2_pp_chart, use_container_width=True)
-
-    ############
-
-    ag_in_vac_status_dist_chart = px.line(sag_df.query('state==@user.state & age_group==@user.age_group'),\
-                            x='date',  y=['dose1_pct','dose2_pct','unvac_pct'])
-    st.plotly_chart(ag_in_vac_status_dist_chart, use_container_width=True)
-
-
-    ag_in_vac_rate_chart = px.line(sag_df.query('state==@user.state'),\
-                            x='date',  y='vac_rate', color='age_group')
-    st.plotly_chart(ag_in_vac_rate_chart, use_container_width=True)
-
-    ag_in_dose1_pp_chart= px.line(sag_df.query('state==@user.state'),\
-                            x='date',  y='dose1_pct', color='age_group')
-    st.plotly_chart(ag_in_dose1_pp_chart, use_container_width=True)
-
-    ag_in_dose2_pp_chart= px.line(sag_df.query('state==@user.state'),\
-                            x='date',  y='dose2_pct', color='age_group')
-    st.plotly_chart(ag_in_dose2_pp_chart, use_container_width=True)
+    # 4. sag in dose2
+    st.markdown("> {}".format(short_com['sag_in_dose2']))
+    st.plotly_chart(chart.pp_chart(overall_ag_df, user,
+                                    col='dose2_pct',
+                                    col_label='2nd dose pct',
+                                    grouping='age_group',
+                                    hl=hl_graph), use_container_width=True)
 
     ############
 
-    ag_out_vac_rate_chart = px.line(sag_df.query('age_group==@user.age_group'),\
-                            x='date',  y='vac_rate', color='state')
-    st.plotly_chart(ag_out_vac_rate_chart, use_container_width=True)
+    st.markdown("### *On {}, [{}] in {} is ...*".format(latest_date, user.age_group, user.state))
+    # 1. sag out vaccination rate
+    st.markdown("> {}".format(short_com['sag_out_vac_rate']))
+    st.plotly_chart(chart.pp_chart(comp_ag_df, user,
+                                    col='vac_rate',
+                                    col_label='vaccination rate',
+                                    grouping='state',
+                                    hl=hl_graph), use_container_width=True)
 
+    # 2. sag out dose1
+    st.markdown("> {}".format(short_com['sag_out_dose1']))
+    st.plotly_chart(chart.pp_chart(comp_ag_df, user,
+                                    col='dose1_pct',
+                                    col_label='1st dose pct',
+                                    grouping='state',
+                                    hl=hl_graph), use_container_width=True)
 
-    ag_out_dose1_pp_chart = px.line(sag_df.query('age_group==@user.age_group'),\
-                            x='date',  y='dose1_pct', color='state')
-    st.plotly_chart(ag_out_dose1_pp_chart, use_container_width=True)
+    # 3. sag out dose2
+    st.markdown("> {}".format(short_com['sag_out_dose2']))
+    st.plotly_chart(chart.pp_chart(comp_ag_df, user,
+                                    col='dose2_pct',
+                                    col_label='2nd dose pct',
+                                    grouping='state',
+                                    hl=hl_graph), use_container_width=True)
 
-    ag_out_dose2_pp_chart = px.line(sag_df.query('age_group==@user.age_group'),\
-                            x='date',  y='dose2_pct', color='state')
-    st.plotly_chart(ag_out_dose1_pp_chart, use_container_width=True)
 
 
     st.subheader('Notes')
-    st.markdown('1. Prediction on reaching 70 or 80% fully vaccinated status is based on 7-day moving average')
-    st.markdown('2. My source data is from https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf. I might have modified the data to correct any mistakes or errors I perceive or notice')
+    st.markdown('1. Prediction on reaching 70 or 80% fully vaccinated status is based on 7-day moving average. This will be updated daily.')
+    st.markdown('2. My source data is from https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf. I might have modified the data to correct any mistakes or errors I perceive or notice.')
     st.markdown('3. This page does not aim or claim to be authoritative of vaccine data roll out. I do not guarantee its accuracy. Use at your own risk, and I take no responsibility of any loss that might have occurred.')
 
 

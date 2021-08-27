@@ -57,7 +57,6 @@ def age_grouping(df):
 
     return df
 
-
 def extra_calculation(a):
     # Grouped extra calculation
     a.sort_values('date', ascending = True, inplace=True)
@@ -87,6 +86,7 @@ def extra_calculation(a):
 
 def save_data(df):
     overall_state_df = df[df['age_group'].str.endswith('_or_above')].copy(deep = True)
+    overall_ag_df = df[~df['age_group'].str.endswith('_or_above')].copy(deep = True)
     sag_df = df[~df['age_group'].str.endswith('_or_above')].copy(deep = True)
 
     # further preprocessing for overall_state_df
@@ -96,14 +96,22 @@ def save_data(df):
     overall_state_df = overall_state_df.query('age_group == "16_or_above"')
     overall_state_df = overall_state_df.groupby('state').apply(lambda d: extra_calculation(d))
 
+    # further preprocessing for overall_ag_df
+    overall_ag_df.drop(columns = ['first_dose_count', 'second_dose_count'], inplace = True)
+    overall_ag_df = overall_ag_df.groupby(['date', 'age_group'])[['dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].sum().reset_index()
+    overall_ag_df['dose1_pct'] = round(100 * overall_ag_df['dose1_cnt']/ overall_ag_df['abspop_jun2020'], 3)
+    overall_ag_df['dose2_pct'] = round(100 * overall_ag_df['dose2_cnt']/ overall_ag_df['abspop_jun2020'], 3)
+    overall_ag_df = overall_ag_df.groupby('age_group').apply(lambda d: extra_calculation(d))
+
     # further preprocessing for sag_df
     sag_df.drop(columns = ['first_dose_count', 'second_dose_count'], inplace = True)
     sag_df = sag_df.groupby(['state', 'age_group']).apply(lambda d: extra_calculation(d))
 
     # overall_state_df.to_parquet('overall_state_df.parquet')
+    # overall_ag_df.to_parquet('overall_ag_df.parquet')
     # sag_df.to_parquet('sag_df.parquet')
 
-    return (overall_state_df, sag_df)
+    return (overall_state_df, overall_ag_df, sag_df)
 
 def update_data():
     df = get_data()
