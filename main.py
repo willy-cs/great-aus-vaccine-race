@@ -28,7 +28,7 @@ np.set_printoptions(suppress=True)
 
 st.set_page_config(page_title='It is a race!', layout='wide')
 
-if __name__ == "__main__":
+def main():
     st.header("Welcome to the Great Australian COVID-19 Vaccine Race!")
 
     (overall_state_df, overall_ag_df, sag_df) = data.update_data()
@@ -36,23 +36,26 @@ if __name__ == "__main__":
     # overall_ag_df = st.cache(pd.read_parquet)('overall_ag_df.parquet')
     # sag_df = st.cache(pd.read_parquet)('sag_df.parquet')
 
-    st.subheader("Choose your team")
-
     list_states = list(sorted(overall_state_df['state'].unique()))
     list_age_group = list(sorted(sag_df['age_group'].unique()))
     list_vac_status = [0,1,2]
-    list_vac_status_pp = ['unvac_pct', 'dose1_pct', 'dose2_pct']
 
-    u_state = st.selectbox('Where do you live?', list_states)
-    u_age_group = st.selectbox('What is your age group?', list_age_group)
-    u_vac = st.selectbox('How many vaccine shots have you had?', list_vac_status)
-    hl_graph = st.selectbox('Highlight your team performance?', [True, False])
+    with st.form('user_form'):
+        st.subheader("Choose your team")
+        u_state = st.selectbox('Where do you live?', list_states)
+        u_age_group = st.selectbox('What is your age group?', list_age_group)
+        u_vac = st.selectbox('How many vaccine shots have you had?', list_vac_status)
+        hl_graph = st.selectbox('Highlight your team performance?', [True, False])
+
+        submitted = st.form_submit_button('Race on!')
+
+    if not submitted:
+        return
 
     user = compare.User(u_state, u_age_group, u_vac)
     latest_date = pd.to_datetime(overall_state_df['date'].max()).date()
 
     st.text("Your team is: {}".format(user))
-
 
     st.subheader('Here is how your team is doing so far in the vaccine race')
     st.subheader('Data last updated: {}'.format(pd.to_datetime(overall_state_df['date'].max()).date()))
@@ -191,3 +194,7 @@ if __name__ == "__main__":
 
 
 
+
+
+if __name__ == "__main__":
+    main()
