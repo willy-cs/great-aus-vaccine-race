@@ -64,3 +64,49 @@ def pp_chart(df, user, col, col_label, grouping, hl=True):
     fig = all_charts_style(fig)
 
     return fig
+
+def eta_chart(df, group_col, user, hl=False, annot=False):
+    color_80_default = 'rgb(141,160,203)'
+    color_70_default = 'rgb(117,112,179)'
+    color_80_hl = 'blue'
+    color_70_hl = 'rgb(47,138,196)'
+    discrete_map_task = { '70%': color_70_default, '80%': color_80_default }
+    fig = px.timeline(df, x_start="date", x_end="est_target_date", y=group_col,
+                        color='eta', color_discrete_map=discrete_map_task)
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0, traceorder='reversed'),
+                        margin=dict(l=0,r=0, t=50, b=20),
+                  )
+    fig.update_layout({'legend_title_text': ''})
+    fig.update_yaxes(autorange="reversed")
+    fig.data[0].hovertemplate='80% Target Est=%{x}<br>' + group_col + '=%{y}<extra></extra>'
+    fig.data[1].hovertemplate='70% Target Est=%{x}<br>' + group_col + '=%{y}<extra></extra>'
+
+    if hl:
+        array_size = int(df[group_col].nunique())
+        query = user.get(group_col)
+        hl_index = df[df[group_col] == query]['annot_y'].iloc[0]
+        default_markers_0 = [color_80_default] * array_size
+        default_markers_1 = [color_70_default] * array_size
+        default_markers_0[hl_index] = color_80_hl
+        default_markers_1[hl_index] = color_70_hl
+        fig.data[0].marker={'color' : default_markers_0}
+        fig.data[1].marker={'color' : default_markers_1}
+    # print(fig.data)
+    # for i, d in enumerate(fig.data):
+    #     d.width = df[df['Task']==d.name]['width']
+
+    if annot:
+        annots=[]
+        for idx, i in df.iterrows():
+            an = dict()
+            an['x'] = i['annot_x']
+            an['y'] = i['annot_y']
+            an['text'] = i['est_target_date'].strftime('%b %d')
+
+            an['showarrow'] = False
+            an['font'] = {'color' : 'White'}
+            annots.append(an)
+
+        fig.update_layout(annotations=annots)
+
+    return fig

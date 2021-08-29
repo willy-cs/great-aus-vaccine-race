@@ -68,29 +68,41 @@ def main():
     st.markdown("> {}".format(short_com['state_vac_status']))
     st.plotly_chart(chart.vac_status_dist_chart(state_df, user, hl=hl_graph), use_container_width=True)
 
-    # 2. state vaccination rate
-    st.markdown("> {}".format(short_com['state_vac_rate']))
-    st.plotly_chart(chart.pp_chart(overall_state_df, user,
-                                    col='vac_rate',
-                                    col_label='vaccination rate',
-                                    grouping='state',
-                                    hl=hl_graph), use_container_width=True)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        # 2. state vaccination rate
+        st.markdown("> {}".format(short_com['state_vac_rate']))
+        st.plotly_chart(chart.pp_chart(overall_state_df, user,
+                                        col='vac_rate',
+                                        col_label='vaccination rate',
+                                        grouping='state',
+                                        hl=hl_graph), use_container_width=True)
+    with col2:
+        # 3. state dose1
+        st.markdown("> {}".format(short_com['state_dose1']))
+        st.plotly_chart(chart.pp_chart(overall_state_df, user,
+                                        col='dose1_pct',
+                                        col_label='1st dose pct',
+                                        grouping='state',
+                                        hl=hl_graph), use_container_width=True)
 
-    # 3. state dose1
-    st.markdown("> {}".format(short_com['state_dose1']))
-    st.plotly_chart(chart.pp_chart(overall_state_df, user,
-                                    col='dose1_pct',
-                                    col_label='1st dose pct',
-                                    grouping='state',
-                                    hl=hl_graph), use_container_width=True)
+    with col3:
+        # 4. state dose2
+        st.markdown("> {}".format(short_com['state_dose2']))
+        st.plotly_chart(chart.pp_chart(overall_state_df, user,
+                                        col='dose2_pct',
+                                        col_label='2nd dose pct',
+                                        grouping='state',
+                                        hl=hl_graph), use_container_width=True)
 
-    # 4. state dose2
-    st.markdown("> {}".format(short_com['state_dose2']))
-    st.plotly_chart(chart.pp_chart(overall_state_df, user,
-                                    col='dose2_pct',
-                                    col_label='2nd dose pct',
-                                    grouping='state',
-                                    hl=hl_graph), use_container_width=True)
+    # 5. eta race
+    # st.markdown("> {}".format(short_com['state_dose2']))
+    eta_df = compare.construct_eta_data(overall_state_df, 'state', user)
+    st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
+                                    user=user,
+                                    hl=hl_graph,
+                                    annot=True), use_container_width=True)
+
 
     st.markdown("### *You and your age group*")
     short_com = compare.ag_comparison(user, overall_ag_df)
@@ -122,7 +134,12 @@ def main():
                                     grouping='age_group',
                                     hl=hl_graph), use_container_width=True)
 
-    # st.text("{}".format(compare.user_age_group_comparison(user, sag_df)))
+    # 5. eta race
+    eta_df = compare.construct_eta_data(overall_ag_df, 'age_group', user)
+    st.plotly_chart(chart.eta_chart(eta_df, group_col='age_group',
+                                    user=user,
+                                    hl=hl_graph,
+                                    annot=False), use_container_width=True)
     #################
 
     st.markdown("### *Your age group vs other age group within your state*")

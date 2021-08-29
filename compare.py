@@ -193,6 +193,8 @@ class User:
         self.vac_status=vac_status
     def __repr__(self):
         return f"""State: {self.state}; Age Group: {self.age_group} ; Number of COVID vaccine dose received: {self.vac_status} """
+    def get(self, item):
+        return getattr(self, item)
 
 def get_latest(df):
     date_max = df['date'].max()
@@ -221,3 +223,20 @@ def sort_eta(c_df):
     c_df['eta_dose2_80_y'] = np.where(c_df['dose2_pct'] < 80, c_df['eta_dose2_80_y'], pd.to_datetime(reach_80))
     return c_df
 
+def construct_eta_data(df, group_col, user):
+    # group_col is either 'state' or 'age_group'
+    cols=['date', group_col , 'eta_dose2_70_y', 'eta_dose2_80_y']
+    eta_df = get_latest(df)
+    eta_df = rank_columns(eta_df)
+    eta_df = eta_df[cols].reset_index(drop=True).sort_values(group_col)
+    eta_df['annot_y'] = eta_df[group_col].rank().astype(int)-1
+
+    eta_df.rename(columns = {'eta_dose2_70_y' : '70%', 'eta_dose2_80_y' : '80%' }, inplace=True)
+    eta_df = pd.melt(eta_df, id_vars=['date', group_col, 'annot_y'], value_vars=['70%', '80%'],
+                        var_name='eta', value_name='est_target_date')
+
+    eta_df['annot_x'] = eta_df['est_target_date'] - datetime.timedelta(days=5)
+
+    eta_df.sort_values(['eta', group_col], ascending=[False, True], inplace=True)
+
+    return eta_df
