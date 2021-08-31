@@ -200,7 +200,7 @@ def main():
 
     st.subheader('Notes')
     st.markdown('1. Prediction on reaching 70 or 80% fully vaccinated status is based on 7-day moving average. This will be updated daily.')
-    st.markdown('2. My source data is from https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf. I might have modified the data to correct any mistakes or errors I perceive or notice.')
+    st.markdown('2. My source data is from https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf, extracted from [WA Health](https://www.wa.gov.au/sites/default/files/2021-06/COVID-19-Vaccination-Dashboard-Guide-for-Interpretation.pdf) (second dose by state data prior to 1st July 2021) and [Department of Health](https://www.health.gov.au/using-our-websites/copyright) (all other data) by [Ken Tsang](https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf). I might have modified the data to correct any mistakes or errors I perceive or notice.')
     st.markdown('3. This page does not aim or claim to be authoritative of vaccine data roll out. I do not guarantee its accuracy. Use at your own risk, and I take no responsibility of any loss that might have occurred.')
 
 
