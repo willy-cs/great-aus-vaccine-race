@@ -48,7 +48,7 @@ def pp_chart(df, user, col, col_label, grouping, hl=True):
 
     fig = px.line(df, x='date', y=col, color=grouping,
                 labels={'date':'date', col:col_label},
-                color_discrete_sequence = px.colors.qualitative.Alphabet
+                color_discrete_sequence = px.colors.qualitative.Dark24
         )
 
     lg = user.state
