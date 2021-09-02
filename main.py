@@ -122,7 +122,7 @@ def main():
         st.markdown("> {}".format(a_short_com['ag_vac_rate']))
         st.plotly_chart(chart.pp_chart(overall_ag_df, user,
                                         col='ma7_vac_rate',
-                                        col_label='MA vaccination rate',
+                                        col_label='MA-7 vaccination rate',
                                         grouping='age_group',
                                         hl=hl_graph), use_container_width=True)
 
@@ -130,14 +130,14 @@ def main():
         st.markdown("> {}".format(sa_short_com['sag_out_vac_rate']))
         st.plotly_chart(chart.pp_chart(comp_ag_df, user,
                                         col='ma7_vac_rate',
-                                        col_label='MA vaccination rate',
+                                        col_label='MA-7 vaccination rate',
                                         grouping='state',
                                         hl=hl_graph), use_container_width=True)
 
         st.markdown("> {}".format(sa_short_com['sag_in_vac_rate']))
         st.plotly_chart(chart.pp_chart(comp_s_df, user,
                                         col='ma7_vac_rate',
-                                        col_label='MA vaccination rate',
+                                        col_label='MA-7 vaccination rate',
                                         grouping='age_group',
                                         hl=hl_graph), use_container_width=True)
 
