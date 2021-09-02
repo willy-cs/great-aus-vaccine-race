@@ -207,6 +207,22 @@ def main():
                                         hl=hl_graph), use_container_width=True)
 
 
+    st.markdown("### *Prediction date to hit 70% and 80% first dose*")
+    col1, col2 = st.columns(2)
+    with col1:
+        eta_df = compare.construct_eta_data(overall_state_df, 'state', user, dose='dose1')
+        st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
+                                        user=user,
+                                        hl=hl_graph,
+                                        annot=True), use_container_width=True)
+
+    with col2:
+        eta_df = compare.construct_eta_data(overall_ag_df, 'age_group', user, dose='dose1')
+        st.plotly_chart(chart.eta_chart(eta_df, group_col='age_group',
+                                        user=user,
+                                        hl=hl_graph,
+                                        annot=False), use_container_width=True)
+
     st.markdown("### *Prediction date to hit 70% and 80% fully vaccinated target*")
     col1, col2 = st.columns(2)
     with col1:
@@ -222,6 +238,7 @@ def main():
                                         user=user,
                                         hl=hl_graph,
                                         annot=False), use_container_width=True)
+
     #################
 
     st.subheader('Notes')

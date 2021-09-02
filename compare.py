@@ -163,27 +163,38 @@ def rank_columns(df):
     return df
 
 def sort_eta(c_df):
-    eta_rank, eta_calc, eta_new_col = 'eta_dose2_70_rank', 'eta_dose2_70', 'eta_dose2_70_y'
-    eta_rank, eta_calc, eta_new_col = 'eta_dose2_70_rank', 'eta_dose2_80', 'eta_dose2_80_y'
-
     reach_70=c_df[c_df['dose2_pct'] >= 70]['date'].min()
     reach_80=c_df[c_df['dose2_pct'] >= 80]['date'].min()
+    print(c_df)
 
     c_df['eta_dose2_70_y'] = (c_df['date'] + pd.to_timedelta(c_df['eta_dose2_70'],unit='days')).dt.date
     c_df['eta_dose2_80_y'] = (c_df['date'] + pd.to_timedelta(c_df['eta_dose2_80'],unit='days')).dt.date
     c_df['eta_dose2_70_y'] = np.where(c_df['dose2_pct'] < 70, c_df['eta_dose2_70_y'], pd.to_datetime(reach_70))
     c_df['eta_dose2_80_y'] = np.where(c_df['dose2_pct'] < 80, c_df['eta_dose2_80_y'], pd.to_datetime(reach_80))
+
+    reach_70_dose1=c_df[c_df['dose1_pct'] >= 70]['date'].min()
+    reach_80_dose1=c_df[c_df['dose1_pct'] >= 80]['date'].min()
+
+    c_df['eta_dose1_70_y'] = (c_df['date'] + pd.to_timedelta(c_df['eta_dose1_70'],unit='days')).dt.date
+    c_df['eta_dose1_80_y'] = (c_df['date'] + pd.to_timedelta(c_df['eta_dose1_80'],unit='days')).dt.date
+    c_df['eta_dose1_70_y'] = np.where(c_df['dose1_pct'] < 70, c_df['eta_dose1_70_y'], pd.to_datetime(reach_70_dose1))
+    c_df['eta_dose1_80_y'] = np.where(c_df['dose1_pct'] < 80, c_df['eta_dose1_80_y'], pd.to_datetime(reach_80_dose1))
+    print(c_df)
     return c_df
 
-def construct_eta_data(df, group_col, user):
+def construct_eta_data(df, group_col, user, dose='dose2'):
     # group_col is either 'state' or 'age_group'
-    cols=['date', group_col , 'eta_dose2_70_y', 'eta_dose2_80_y']
+
+    eta_70_col = 'eta_' + dose +  '_70_y'
+    eta_80_col = 'eta_' + dose +  '_80_y'
+
+    cols=['date', group_col , eta_70_col, eta_80_col]
     eta_df = get_latest(df)
     eta_df = rank_columns(eta_df)
     eta_df = eta_df[cols].reset_index(drop=True).sort_values(group_col)
     eta_df['annot_y'] = eta_df[group_col].rank().astype(int)-1
 
-    eta_df.rename(columns = {'eta_dose2_70_y' : '70%', 'eta_dose2_80_y' : '80%' }, inplace=True)
+    eta_df.rename(columns = {eta_70_col : '70%', eta_80_col : '80%' }, inplace=True)
     eta_df = pd.melt(eta_df, id_vars=['date', group_col, 'annot_y'], value_vars=['70%', '80%'],
                         var_name='eta', value_name='est_target_date')
 
