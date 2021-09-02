@@ -28,44 +28,65 @@ np.set_printoptions(suppress=True)
 
 st.set_page_config(page_title='It is a race!', layout='wide')
 
+MIN_AGE=16
+MAX_AGE=999
+
 def main():
     st.header("Welcome to the Great Australian COVID-19 Vaccine Race!")
 
-    (overall_state_df, overall_ag_df, sag_df) = data.update_data()
-    # overall_state_df = st.cache(pd.read_parquet)('overall_state_df.parquet')
-    # overall_ag_df = st.cache(pd.read_parquet)('overall_ag_df.parquet')
-    # sag_df = st.cache(pd.read_parquet)('sag_df.parquet')
+    cached_df = data.get_data()
+    df = cached_df.copy(deep = True)
+    df = data.age_grouping(df, False)
 
-    list_states = list(sorted(overall_state_df['state'].unique()))
-    list_age_group = list(sorted(sag_df['age_group'].unique()))
+    list_states = list(sorted(df['state'].unique()))
+    list_age_group = list(sorted(df['age_group'].unique()))
     list_vac_status = [0,1,2]
+    age_group_10_flag = False
 
     with st.form('user_form'):
-        st.subheader("Choose your team")
-        u_state = st.selectbox('Where do you live?', list_states)
-        u_age_group = st.selectbox('What is your age group?', list_age_group)
-        u_vac = st.selectbox('How many vaccine shots have you had?', list_vac_status)
-        hl_graph = st.selectbox('Highlight your team performance?', [True, False])
+        col1, col2= st.columns(2)
+        with col1:
+            st.subheader("Choose your team")
+            u_state = st.selectbox('Where do you live?', list_states)
+            u_vac = st.selectbox('How many vaccine shots have you had?', list_vac_status)
+            u_age = st.text_input('What is your age? [{}-{}]'.format(MIN_AGE, MAX_AGE))
+        with col2:
+            st.subheader('Any preferences?')
+            hl_graph = st.radio('Highlight your team performance?', [True, False])
+            age_group_preference = st.radio('Race result age group?',
+                ['10 years increment (e.g. 30-39,40-49,50-59,...)',
+                    '5 years increment (e.g. 24-29,30-34,35-39...)'])
+
+            if age_group_preference == "10 years increment (e.g. 30-39,40-49,50-59,...)":
+                age_group_10_flag = True
 
         submitted = st.form_submit_button('Race on!')
 
     if not submitted:
         return
 
-    user = compare.User(u_state, u_age_group, u_vac)
-    latest_date = pd.to_datetime(overall_state_df['date'].max()).date().strftime('%d %b %Y')
-
-    # st.text("Your team is: {}".format(user))
-    # st.subheader('Here is how your team is doing, as of {} ...'.format(latest_date))
-
-    s_short_com = compare.state_comparison(user, overall_state_df)
-    a_short_com = compare.ag_comparison(user, overall_ag_df)
-    sa_short_com = compare.state_age_group_comparison(user, sag_df)
-    state_df=overall_state_df.query('state==@user.state')
-    ag_df=overall_ag_df.query('age_group==@user.age_group')
-    comp_sag_df=sag_df.query('state==@user.state & age_group==@user.age_group')
-    comp_s_df=sag_df.query('state==@user.state')
-    comp_ag_df=sag_df.query('age_group==@user.age_group')
+    u_age_group=''
+    try:
+        if u_age == '' or int(u_age) < MIN_AGE or int(u_age) > MAX_AGE:
+            st.write('Invalid age, please retry.')
+            return
+        else:
+            df = data.age_grouping(df,age_group_10_flag)
+            (overall_state_df, overall_ag_df, sag_df) = data.save_data(df)
+            u_age_group = data.find_age_group(overall_ag_df,u_age)
+            latest_date = pd.to_datetime(overall_state_df['date'].max()).date().strftime('%d %b %Y')
+            user = compare.User(u_state, u_age_group, u_vac)
+            s_short_com = compare.state_comparison(user, overall_state_df)
+            a_short_com = compare.ag_comparison(user, overall_ag_df)
+            sa_short_com = compare.state_age_group_comparison(user, sag_df)
+            state_df=overall_state_df.query('state==@user.state')
+            ag_df=overall_ag_df.query('age_group==@user.age_group')
+            comp_sag_df=sag_df.query('state==@user.state & age_group==@user.age_group')
+            comp_s_df=sag_df.query('state==@user.state')
+            comp_ag_df=sag_df.query('age_group==@user.age_group')
+    except Exception as e:
+        st.write(e)
+        return
 
 
     st.markdown("### *Vaccination status on {}*".format(latest_date))
@@ -87,33 +108,38 @@ def main():
     with col1:
         st.markdown("> {}".format(s_short_com['state_vac_rate']))
         st.plotly_chart(chart.pp_chart(overall_state_df, user,
-                                        col='vac_rate',
-                                        col_label='vaccination rate',
+                                        col='ma7_vac_rate',
+                                        col_label='MA-7 vaccination rate',
                                         grouping='state',
                                         hl=hl_graph), use_container_width=True)
 
+        # st.plotly_chart(chart.pp_chart(overall_state_df, user,
+        #                                 col='ma7_dose1_vac_rate',
+        #                                 col_label='MA-7 dose 1 vaccination rate',
+        #                                 grouping='state',
+        #                                 hl=hl_graph), use_container_width=True)
+
         st.markdown("> {}".format(a_short_com['ag_vac_rate']))
         st.plotly_chart(chart.pp_chart(overall_ag_df, user,
-                                        col='vac_rate',
-                                        col_label='vaccination rate',
+                                        col='ma7_vac_rate',
+                                        col_label='MA vaccination rate',
                                         grouping='age_group',
                                         hl=hl_graph), use_container_width=True)
 
     with col2:
         st.markdown("> {}".format(sa_short_com['sag_out_vac_rate']))
         st.plotly_chart(chart.pp_chart(comp_ag_df, user,
-                                        col='vac_rate',
-                                        col_label='vaccination rate',
+                                        col='ma7_vac_rate',
+                                        col_label='MA vaccination rate',
                                         grouping='state',
                                         hl=hl_graph), use_container_width=True)
 
         st.markdown("> {}".format(sa_short_com['sag_in_vac_rate']))
         st.plotly_chart(chart.pp_chart(comp_s_df, user,
-                                        col='vac_rate',
-                                        col_label='vaccination rate',
+                                        col='ma7_vac_rate',
+                                        col_label='MA vaccination rate',
                                         grouping='age_group',
                                         hl=hl_graph), use_container_width=True)
-
 
     st.markdown("### *First jab coverage on {}*".format(latest_date))
     col1, col2 = st.columns(2)

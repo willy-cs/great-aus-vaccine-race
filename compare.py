@@ -35,7 +35,7 @@ def state_comparison(user, overall_state_df):
 
     comment = dict()
     comment['state_vac_status'] = f"""{int(s[user_state_vac_count]):,} ({s[user_state_vac_pp]}%) out of the {int(s['abspop_jun2020']):,} over 16 population in {user.state} {user_state_vac_count_str}."""
-    comment['state_vac_rate'] = f"""{user.state} administered {int(s['delta_dose12']):,} vaccines -- {s['vac_rate']}% of its over 16 population. It is ranked #{s['vac_rate_rank']}."""
+    comment['state_vac_rate'] = f"""{user.state} administered {int(s['delta_dose12']):,} vaccines -- {s['vac_rate']}% of its over 16 population. {user.state} current 7-day moving average vaccination rate is at {s['ma7_vac_rate']}%. It is ranked #{s['ma7_vac_rate_rank']}."""
     comment['state_dose1'] = f"""{s['dose1_pct']}% of {user.state} over 16 population has had their first jab. It is ranked #{s['dose1_rank']}."""
     comment['state_dose2'] = f"""{s['dose2_pct']}% of {user.state} over 16 population has been fully vaccinated. It is ranked #{s['dose2_rank']}."""
 
@@ -50,7 +50,7 @@ def ag_comparison(user, overall_ag_df):
 
     comment = dict()
     comment['ag_vac_status'] = f"""{int(s[user_ag_vac_count]):,} ({s[user_ag_vac_pp]}%) out of the {int(s['abspop_jun2020']):,} people in the [{user.age_group}] age group nationally {user_ag_vac_count_str}."""
-    comment['ag_vac_rate'] = f"""Nationally, {s['vac_rate']}% of [{user.age_group}] age group was administered a jab. It is ranked #{s['vac_rate_rank']} across all other age groups."""
+    comment['ag_vac_rate'] = f"""Nationally, {s['vac_rate']}% of [{user.age_group}] age group was administered a jab. [{user.age_group}] age group current 7-day moving average vaccination rate is at {s['ma7_vac_rate']}%. It is ranked #{s['ma7_vac_rate_rank']} across all other age groups."""
     comment['ag_dose1'] = f"""Nationally, {s['dose1_pct']}% of [{user.age_group}] age group has had their first jab. It is ranked #{s['dose1_rank']}."""
     comment['ag_dose2'] = f"""Nationally, {s['dose2_pct']}% of [{user.age_group}] age group has been fully vaccinated. It is ranked #{s['dose2_rank']}."""
 
@@ -73,11 +73,11 @@ def state_age_group_comparison(user, sag_df):
     comment = dict()
     comment['sag_in_vac_status'] = f"""{int(s[user_vac_count]):,} ({s[user_vac_pp]}%) out of the {int(s['abspop_jun2020']):,} people in the [{user.age_group}] age group living in {user.state} {user_vac_count_str}."""
 
-    comment['sag_in_vac_rate'] = f"""In {user.state}, {s['vac_rate']}% of [{user.age_group}] age group was administered a jab. It is ranked #{s['vac_rate_rank']} across all other age groups."""
+    comment['sag_in_vac_rate'] = f"""In {user.state}, {s['vac_rate']}% of [{user.age_group}] age group was administered a jab. [{user.age_group}] age group current 7-day moving average vaccination rate is at {s['ma7_vac_rate']}%. It is ranked #{s['ma7_vac_rate_rank']} across all other age groups."""
     comment['sag_in_dose1'] = f"""{s['dose1_pct']}% of [{user.age_group}] age group in {user.state} has had their first jab. It is ranked #{s['dose1_rank']} across all other age groups."""
     comment['sag_in_dose2'] = f"""{s['dose2_pct']}% of [{user.age_group}] age group in {user.state} has been fully vaccinated. It is ranked #{s['dose2_rank']} across all other age groups."""
 
-    comment['sag_out_vac_rate'] = f"""{s_out['vac_rate']}% of [{user.age_group}] age group in {user.state} were administered a jab. It is ranked #{s_out['vac_rate_rank']}, compared to other states and territories."""
+    comment['sag_out_vac_rate'] = f"""{s_out['vac_rate']}% of [{user.age_group}] age group in {user.state} were administered a jab. [{user.age_group}] in {user.state} current 7-day moving average vaccination rate is at {s_out['ma7_vac_rate']}%. It is ranked #{s_out['ma7_vac_rate_rank']}, compared to other states and territories."""
     comment['sag_out_dose1'] = f"""{s_out['dose1_pct']}% of [{user.age_group}] age group in {user.state} has had their first jab. It is ranked #{s_out['dose1_rank']}, compared to other states and territories."""
     comment['sag_out_dose2'] = f"""{s_out['dose2_pct']}% of [{user.age_group}] age group in {user.state} has been fully vaccinated. It is ranked #{s_out['dose2_rank']}, compared to other states and territories."""
 
@@ -153,6 +153,7 @@ def get_latest(df):
 
 def rank_columns(df):
     df['vac_rate_rank'] = df['vac_rate'].rank(method='first', ascending=False).astype(int)
+    df['ma7_vac_rate_rank'] = df['ma7_vac_rate'].rank(method='first', ascending=False).astype(int)
     df['dose1_rank'] = df['dose1_pct'].rank(method='first', ascending=False).astype(int)
     df['dose2_rank'] = df['dose2_pct'].rank(method='first', ascending=False).astype(int)
     df = sort_eta(df)

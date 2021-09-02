@@ -22,6 +22,7 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 np.set_printoptions(suppress=True)
 
+@st.cache(suppress_st_warning=True, ttl=600)
 def get_data():
     data_url = "https://vaccinedata.covid19nearme.com.au/data/air_residence.csv"
     df = pd.read_csv(data_url)
@@ -44,9 +45,10 @@ def get_data():
 
     return df
 
-def age_grouping(df):
+def age_grouping(df, age_group_10_flag):
     df['age_group'] = df['age_lower'].astype(str) + '-' + df['age_upper'].astype(str)
-    # df = age_grouping_10y(df)
+    if age_group_10_flag:
+        df = age_grouping_10y(df)
 
     m = df['age_group'] != "0-999"
     df['age_group'].where(m, "0_or_above", inplace = True)
@@ -86,7 +88,7 @@ def extra_calculation(a):
     a['delta_dose12'] = a['delta_dose1'] + a['delta_dose2']
     a['vac_rate'] = round(a['delta_dose12'] / a['abspop_jun2020'] * 100, 2)
     a['vac_rate'] = a['vac_rate'].clip(0)
-    a['ma7_vac_rate'] = a['vac_rate'].rolling(7).mean().replace(0, 0.001)
+    a['ma7_vac_rate'] = round(a['vac_rate'].rolling(7).mean().replace(0, 0.001), 2)
 
 
     # modified delta, cap the minus values in delta into 0.
@@ -104,8 +106,16 @@ def extra_calculation(a):
     a['eta_dose2_70'] = (0.7 * a['abspop_jun2020'] - a['dose2_cnt']) / a['ma7_dose2']
     a['eta_dose2_80'] = (0.8 * a['abspop_jun2020'] - a['dose2_cnt']) / a['ma7_dose2']
 
+
+    a['vac_rate_dose1'] = round(a['delta_dose1'] / a['abspop_jun2020'] * 100, 2)
+    a['vac_rate_dose1'] = a['vac_rate_dose1'].clip(0)
+    a['ma7_dose1_vac_rate'] = round(a['vac_rate_dose1'].rolling(7).mean().replace(0, 0.001), 2)
+    a['eta_dose1_70'] = (0.7 * a['abspop_jun2020'] - a['dose1_cnt']) / a['ma7_dose1']
+    a['eta_dose1_80'] = (0.8 * a['abspop_jun2020'] - a['dose1_cnt']) / a['ma7_dose1']
+
     return a
 
+# @st.cache(suppress_st_warning=True, ttl=600)
 def save_data(df):
     overall_state_df = df[df['age_group'].str.endswith('_or_above')].copy(deep = True)
     overall_ag_df = df[~df['age_group'].str.endswith('_or_above')].copy(deep = True)
@@ -145,6 +155,24 @@ def update_data():
     df = get_data()
     df = age_grouping(df)
     return save_data(df)
+
+def find_age_group(df, age):
+    age_groups = df['age_group'].to_list()
+
+    for i in age_groups:
+        upper_age = '999'
+        if '+' in i:
+            lower_age = i.split('+')[0]
+            print(lower_age)
+        else:
+            lower_age, upper_age = i.split('-')
+
+        if int(age) >= int(lower_age) and int(age) <= int(upper_age):
+            return i
+
+    # default returning to the largest group
+    return i
+
 
 if __name__ == '__main__':
     df = get_data()
