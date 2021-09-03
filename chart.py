@@ -111,3 +111,19 @@ def eta_chart(df, group_col, user, hl=False, annot=False):
         fig.update_layout(annotations=annots)
 
     return fig
+
+
+def dose1_vs_dose2_rate_facet(df):
+    fig=px.line(df,
+                x='date',
+                y=['ma7_dose1_vac_rate', 'ma7_dose2_vac_rate'],
+                labels={'value': 'MA-7 vaccination rate', 'variable': 'dose type'},
+                facet_col='state',
+                facet_col_wrap=4)
+
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="left", x=0),
+                      margin=dict(l=0,r=0, t=50, b=20))
+    fig.update_layout({'legend_title_text': ''})
+    # fig = all_charts_style(fig)
+
+    return fig

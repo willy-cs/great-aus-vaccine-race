@@ -239,6 +239,9 @@ def main():
                                         hl=hl_graph,
                                         annot=False), use_container_width=True)
 
+
+    st.markdown("### *Dose 1 vs Dose 2 vaccination rate, across states and territories*")
+    st.plotly_chart(chart.dose1_vs_dose2_rate_facet(overall_state_df), use_container_width=True)
     #################
 
     st.subheader('Notes')
