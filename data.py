@@ -26,7 +26,8 @@ np.set_printoptions(suppress=True)
 def get_data():
     data_url = "https://vaccinedata.covid19nearme.com.au/data/air_residence.csv"
     df = pd.read_csv(data_url)
-    df.at[3497, 'AIR_RESIDENCE_SECOND_DOSE_COUNT'] = 475180
+    df.at[3497, 'AIR_RESIDENCE_SECOND_DOSE_PCT'] = 24.41 # according to ABC
+    df.at[3497, 'AIR_RESIDENCE_SECOND_DOSE_COUNT'] = 516266
     df = df.query('VALIDATED == "Y"')
     df.drop(columns = ['URL', 'VALIDATED'], inplace = True)
     cols= {'DATE_AS_AT' : 'DATE',
@@ -88,7 +89,7 @@ def extra_calculation(a):
     a['delta_dose12'] = a['delta_dose1'] + a['delta_dose2']
     a['vac_rate'] = round(a['delta_dose12'] / a['abspop_jun2020'] * 100, 2)
     a['vac_rate'] = a['vac_rate'].clip(0)
-    a['ma7_vac_rate'] = round(a['vac_rate'].rolling(7).mean().replace(0, 0.001), 2)
+    a['ma7_vac_rate'] = round(a['vac_rate'].rolling(7).mean().replace(0, 0.01), 2)
 
 
     # modified delta, cap the minus values in delta into 0.
@@ -97,8 +98,8 @@ def extra_calculation(a):
     a['delta_dose1_mod'] = a['delta_dose1'].clip(0)
     a['delta_dose2_mod'] = a['delta_dose2'].clip(0)
     # replacing 0 in moving average with small values to make sure we're not predicting infinity
-    a['ma7_dose1'] = a['delta_dose1_mod'].rolling(7).mean().replace(0, 0.001)
-    a['ma7_dose2'] = a['delta_dose2_mod'].rolling(7).mean().replace(0, 0.001)
+    a['ma7_dose1'] = a['delta_dose1_mod'].rolling(7).mean().replace(0, 0.01)
+    a['ma7_dose2'] = a['delta_dose2_mod'].rolling(7).mean().replace(0, 0.01)
     a['unvac'] = a['abspop_jun2020'] - a['dose1_cnt']
     a['unvac_pct'] = round(a['unvac']/a['abspop_jun2020'] *100, 2)
 
@@ -110,6 +111,11 @@ def extra_calculation(a):
     a['vac_rate_dose1'] = round(a['delta_dose1'] / a['abspop_jun2020'] * 100, 2)
     a['vac_rate_dose1'] = a['vac_rate_dose1'].clip(0)
     a['ma7_dose1_vac_rate'] = round(a['vac_rate_dose1'].rolling(7).mean().replace(0, 0.001), 2)
+
+    a['vac_rate_dose2'] = round(a['delta_dose2'] / a['abspop_jun2020'] * 100, 2)
+    a['vac_rate_dose2'] = a['vac_rate_dose2'].clip(0)
+    a['ma7_dose2_vac_rate'] = round(a['vac_rate_dose2'].rolling(7).mean().replace(0, 0.001), 2)
+
     a['eta_dose1_70'] = (0.7 * a['abspop_jun2020'] - a['dose1_cnt']) / a['ma7_dose1']
     a['eta_dose1_80'] = (0.8 * a['abspop_jun2020'] - a['dose1_cnt']) / a['ma7_dose1']
 
