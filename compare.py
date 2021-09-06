@@ -166,18 +166,19 @@ def sort_eta(c_df):
     reach_70=c_df[c_df['dose2_pct'] >= 70]['date'].min()
     reach_80=c_df[c_df['dose2_pct'] >= 80]['date'].min()
 
-    c_df['eta_dose2_70_y'] = (c_df['date'] + pd.to_timedelta(c_df['eta_dose2_70'],unit='days')).dt.date
-    c_df['eta_dose2_80_y'] = (c_df['date'] + pd.to_timedelta(c_df['eta_dose2_80'],unit='days')).dt.date
+    c_df['eta_dose2_70_y'] = ((c_df['date'] + pd.to_timedelta(c_df['eta_dose2_70'],unit='days')).dt.ceil(freq='D')).dt.date
+    c_df['eta_dose2_80_y'] = ((c_df['date'] + pd.to_timedelta(c_df['eta_dose2_80'],unit='days')).dt.ceil(freq='D')).dt.date
     c_df['eta_dose2_70_y'] = np.where(c_df['dose2_pct'] < 70, c_df['eta_dose2_70_y'], pd.to_datetime(reach_70))
     c_df['eta_dose2_80_y'] = np.where(c_df['dose2_pct'] < 80, c_df['eta_dose2_80_y'], pd.to_datetime(reach_80))
 
     reach_70_dose1=c_df[c_df['dose1_pct'] >= 70]['date'].min()
     reach_80_dose1=c_df[c_df['dose1_pct'] >= 80]['date'].min()
 
-    c_df['eta_dose1_70_y'] = (c_df['date'] + pd.to_timedelta(c_df['eta_dose1_70'],unit='days')).dt.date
-    c_df['eta_dose1_80_y'] = (c_df['date'] + pd.to_timedelta(c_df['eta_dose1_80'],unit='days')).dt.date
+    c_df['eta_dose1_70_y'] = ((c_df['date'] + pd.to_timedelta(c_df['eta_dose1_70'],unit='days')).dt.ceil(freq='D')).dt.date
+    c_df['eta_dose1_80_y'] = ((c_df['date'] + pd.to_timedelta(c_df['eta_dose1_80'],unit='days')).dt.ceil(freq='D')).dt.date
     c_df['eta_dose1_70_y'] = np.where(c_df['dose1_pct'] < 70, c_df['eta_dose1_70_y'], pd.to_datetime(reach_70_dose1))
     c_df['eta_dose1_80_y'] = np.where(c_df['dose1_pct'] < 80, c_df['eta_dose1_80_y'], pd.to_datetime(reach_80_dose1))
+
     return c_df
 
 def construct_eta_data(df, group_col, user, dose='dose2'):
@@ -196,8 +197,7 @@ def construct_eta_data(df, group_col, user, dose='dose2'):
     eta_df = pd.melt(eta_df, id_vars=['date', group_col, 'annot_y'], value_vars=['70%', '80%'],
                         var_name='eta', value_name='est_target_date')
 
-    eta_df['annot_x'] = eta_df['est_target_date'] - datetime.timedelta(days=5)
-
+    eta_df['annot_x'] = eta_df['est_target_date'] - datetime.timedelta(days=3)
     eta_df.sort_values(['eta', group_col], ascending=[False, True], inplace=True)
 
     return eta_df

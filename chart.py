@@ -100,7 +100,10 @@ def eta_chart(df, group_col, user, hl=False, annot=False):
         annots=[]
         for idx, i in df.iterrows():
             an = dict()
-            an['x'] = i['annot_x']
+            if (i['est_target_date'] <= i['date']):
+                an['x'] = ''
+            else:
+                an['x'] = i['annot_x']
             an['y'] = i['annot_y']
             an['text'] = i['est_target_date'].strftime('%b %d')
 
@@ -113,12 +116,12 @@ def eta_chart(df, group_col, user, hl=False, annot=False):
     return fig
 
 
-def dose1_vs_dose2_rate_facet(df):
+def dose1_vs_dose2_rate_facet(df, facet='state'):
     fig=px.line(df,
                 x='date',
                 y=['ma7_dose1_vac_rate', 'ma7_dose2_vac_rate'],
                 labels={'value': 'MA-7 vaccination rate', 'variable': 'dose type'},
-                facet_col='state',
+                facet_col=facet,
                 facet_col_wrap=4)
 
     fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="left", x=0),
