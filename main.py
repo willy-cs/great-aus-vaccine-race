@@ -245,6 +245,9 @@ def main():
 
     st.markdown("### *Dose 1 vs Dose 2 vaccination rate, across age groups*")
     st.plotly_chart(chart.dose1_vs_dose2_rate_facet(overall_ag_df, facet='age_group'), use_container_width=True)
+
+    st.markdown("### *Dose 1 vs Dose 2 vaccination rate in {}, across age groups*".format(user.state))
+    st.plotly_chart(chart.dose1_vs_dose2_rate_facet(sag_df.query('state == @user.state'), facet='age_group'), use_container_width=True)
     #################
 
     st.subheader('Notes')
