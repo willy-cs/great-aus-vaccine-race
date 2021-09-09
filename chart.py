@@ -2,6 +2,7 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 from itertools import cycle
+import config
 
 VAC_STATUS_PP = ['unvac_pct', 'dose1_pct', 'dose2_pct']
 HL_FADE_COLOUR = 'lightgrey'
@@ -128,5 +129,66 @@ def dose1_vs_dose2_rate_facet(df, facet='state'):
                       margin=dict(l=0,r=0, t=50, b=20))
     fig.update_layout({'legend_title_text': ''})
     # fig = all_charts_style(fig)
+
+    return fig
+
+
+def vac_status(df, people, jur, stats):
+    chart_df = df.query('state==@jur')
+
+    label={'date':'date', 'value':'{} of vaccination status'.format(stats), 'variable': 'vac status'}
+
+    ry = None
+    if stats == 'Cumulative percentage':
+        ry = [0,100]
+
+    fig = px.line(chart_df,
+            x='date', y=config.stats_options[stats],
+            range_y=ry,
+            labels=label,
+        )
+
+    dose1_m, dose2_m, unvac_m = config.stats_options[stats]
+
+    legends = cycle(['1st dose', '2nd dose', 'unvac'])
+    ann=[]
+    # dose1 annot
+    ann.append(
+            {'x': chart_df['date'].max(),
+            'y': chart_df[dose1_m].max(),
+            'text': '{:,}'.format(chart_df[dose1_m].max())
+            }
+    )
+    # dose2 annot
+    ann.append(
+            {'x': chart_df['date'].max(),
+            'y': chart_df[dose2_m].max(),
+            'text': '{:,}'.format(chart_df[dose2_m].max())
+            }
+    )
+
+    fig.update_layout(
+            title=dict(font=dict(size=25),
+                        text='Vaccination Status in {}'.format(jur),
+                        xanchor='center',
+                        yanchor='top',
+                        x=0.5,
+                        y=1,
+                    ),
+            annotations=ann,
+            hoverlabel=dict(
+                bgcolor="white",
+                font_size=16,
+                font_family="Rockwell"
+            ),
+            hovermode='x unified',
+        )
+
+    fig.for_each_trace(lambda t: t.update(name=next(legends)))
+    fig = all_charts_style(fig)
+
+    fig.update_traces(
+        hovertemplate=config.hover_template[stats],
+    )
 
     return fig
