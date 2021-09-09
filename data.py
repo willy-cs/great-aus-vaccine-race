@@ -77,7 +77,7 @@ def age_grouping_10y(df):
                         np.where(df['age_group'].isin(['80-84', '85-89']), '80+',
                         np.where(df['age_group'].isin(['90-94', '95-999']), '80+', df['age_group']))))))))
 
-    df=df.groupby(['date', 'state', 'age_group'])[['first_dose_count', 'second_dose_count', 'dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].agg(sum).reset_index()
+    df=df.groupby(['date', 'state', 'age_group'])[['dose1_pct', 'dose2_pct', 'first_dose_count', 'second_dose_count', 'dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].agg(sum).reset_index()
 
     return df
 
@@ -131,23 +131,17 @@ def save_data(df):
     overall_state_df.drop(columns=['dose1_cnt', 'dose2_cnt'], inplace=True)
     overall_state_df.rename(columns={'first_dose_count': 'dose1_cnt',
                                      'second_dose_count': 'dose2_cnt'}, inplace=True)
-    overall_state_df['dose1_pct'] = round(100 * overall_state_df['dose1_cnt']/ overall_state_df['abspop_jun2020'], 3)
-    overall_state_df['dose2_pct'] = round(100 * overall_state_df['dose2_cnt']/ overall_state_df['abspop_jun2020'], 3)
     overall_state_df = overall_state_df.query('age_group == "16_or_above"')
     overall_state_df = overall_state_df.groupby('state').apply(lambda d: extra_calculation(d))
 
     # further preprocessing for overall_ag_df
     overall_ag_df.drop(columns = ['first_dose_count', 'second_dose_count'], inplace = True)
-    overall_ag_df = overall_ag_df.groupby(['date', 'age_group'])[['dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].sum().reset_index()
-    overall_ag_df['dose1_pct'] = round(100 * overall_ag_df['dose1_cnt']/ overall_ag_df['abspop_jun2020'], 3)
-    overall_ag_df['dose2_pct'] = round(100 * overall_ag_df['dose2_cnt']/ overall_ag_df['abspop_jun2020'], 3)
+    overall_ag_df = overall_ag_df.groupby(['date', 'age_group'])[['dose1_pct', 'dose2_pct', 'dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].sum().reset_index()
     overall_ag_df = overall_ag_df.groupby('age_group').apply(lambda d: extra_calculation(d))
 
     # further preprocessing for sag_df
     sag_df.drop(columns = ['first_dose_count', 'second_dose_count'], inplace = True)
     sag_df = sag_df.groupby(['state', 'age_group']).apply(lambda d: extra_calculation(d))
-    sag_df['dose1_pct'] = round(100 * sag_df['dose1_cnt']/ sag_df['abspop_jun2020'], 3)
-    sag_df['dose2_pct'] = round(100 * sag_df['dose2_cnt']/ sag_df['abspop_jun2020'], 3)
     sag_df.sort_values(['date', 'state', 'age_group'], ascending=[True, True, True], inplace=True)
 
     # overall_state_df.to_parquet('overall_state_df.parquet')
