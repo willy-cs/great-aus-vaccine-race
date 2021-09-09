@@ -41,6 +41,10 @@ def get_data():
           }
 
     df.rename(columns = cols, inplace = True)
+    df['FIRST_DOSE_COUNT']=df['FIRST_DOSE_COUNT'].fillna(0).astype(int)
+    df['SECOND_DOSE_COUNT']=df['SECOND_DOSE_COUNT'].fillna(0).astype(int)
+    df['DOSE1_CNT']=df['DOSE1_CNT'].fillna(0).astype(int)
+    df['DOSE2_CNT']=df['DOSE2_CNT'].fillna(0).astype(int)
     df.columns = df.columns.str.lower()
     df['date'] = pd.to_datetime(df['date'])
 
@@ -131,8 +135,8 @@ def save_data(df):
     overall_state_df.drop(columns=['dose1_cnt', 'dose2_cnt'], inplace=True)
     overall_state_df.rename(columns={'first_dose_count': 'dose1_cnt',
                                      'second_dose_count': 'dose2_cnt'}, inplace=True)
-    overall_state_df['dose1_pct'] = round(100 * overall_state_df['dose1_cnt']/ overall_state_df['abspop_jun2020'], 3)
-    overall_state_df['dose2_pct'] = round(100 * overall_state_df['dose2_cnt']/ overall_state_df['abspop_jun2020'], 3)
+    overall_state_df['dose1_pct'] = round(100 * overall_state_df['dose1_cnt']/ overall_state_df['abspop_jun2020'], 2)
+    overall_state_df['dose2_pct'] = round(100 * overall_state_df['dose2_cnt']/ overall_state_df['abspop_jun2020'], 2)
     overall_state_df = overall_state_df.query('age_group == "16_or_above"')
     overall_state_df = overall_state_df.groupby('state').apply(lambda d: extra_calculation(d))
 
@@ -146,8 +150,8 @@ def save_data(df):
     # further preprocessing for sag_df
     sag_df.drop(columns = ['first_dose_count', 'second_dose_count'], inplace = True)
     sag_df = sag_df.groupby(['state', 'age_group']).apply(lambda d: extra_calculation(d))
-    sag_df['dose1_pct'] = round(100 * sag_df['dose1_cnt']/ sag_df['abspop_jun2020'], 3)
-    sag_df['dose2_pct'] = round(100 * sag_df['dose2_cnt']/ sag_df['abspop_jun2020'], 3)
+    sag_df['dose1_pct'] = round(100 * sag_df['dose1_cnt']/ sag_df['abspop_jun2020'], 2)
+    sag_df['dose2_pct'] = round(100 * sag_df['dose2_cnt']/ sag_df['abspop_jun2020'], 2)
     sag_df.sort_values(['date', 'state', 'age_group'], ascending=[True, True, True], inplace=True)
 
     # overall_state_df.to_parquet('overall_state_df.parquet')
@@ -169,7 +173,6 @@ def find_age_group(df, age):
         upper_age = '999'
         if '+' in i:
             lower_age = i.split('+')[0]
-            print(lower_age)
         else:
             lower_age, upper_age = i.split('-')
 
