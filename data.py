@@ -46,9 +46,18 @@ def get_data():
     df['DOSE1_CNT']=df['DOSE1_CNT'].fillna(0).astype(int)
     df['DOSE2_CNT']=df['DOSE2_CNT'].fillna(0).astype(int)
     df.columns = df.columns.str.lower()
+    aus_df=get_national_fig(df)
+    df=pd.concat([df,aus_df], ignore_index=True)
     df['date'] = pd.to_datetime(df['date'])
+    df=df.sort_values(['date', 'state', 'age_lower'], ascending=True)
 
     return df
+
+def get_national_fig(df):
+    aus_df = df.groupby(['date', 'age_lower', 'age_upper'])[['first_dose_count', 'second_dose_count', 'dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].sum().reset_index()
+    aus_df['state'] = 'AUS'
+
+    return aus_df
 
 def age_grouping(df, age_group_10_flag):
     df['age_group'] = df['age_lower'].astype(str) + '-' + df['age_upper'].astype(str)
