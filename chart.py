@@ -132,6 +132,97 @@ def dose1_vs_dose2_rate_facet(df, facet='state'):
 
     return fig
 
+def vac_rate_facet(df, cols, label, facet='state'):
+    fig=px.line(df,
+                x='date',
+                # y=['ma7_vac_rate', 'ma7_dose1_vac_rate', 'ma7_dose2_vac_rate'],
+                y=cols,
+                labels={'value': label, 'variable': 'dose type'},
+                facet_col=facet,
+                facet_col_wrap=3,
+                category_orders={"state": config.states_rank},
+                color_discrete_sequence = px.colors.qualitative.Dark2
+                )
+
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="left", x=0),
+                      margin=dict(l=0,r=0, t=50, b=20))
+    fig.update_layout({'legend_title_text': ''})
+    # fig = all_charts_style(fig)
+
+    return fig
+
+
+def vac_rate_chart(df, col, col_label, grouping):
+    """
+        col: dataframe's column name
+                e.g. 'vac_rate', 'dose1_pct', 'dose2_pct'
+        col_label: the printed column name in graph
+        grouping: 'state' or 'age_group'
+    """
+
+    fig = px.line(df, x='date', y=col, color=grouping,
+                category_orders={"state": config.states_rank},
+                labels={'date':'date', col:col_label},
+                color_discrete_sequence = px.colors.qualitative.Set1
+        )
+
+    fig = all_charts_style(fig)
+    fig.update_traces(mode="lines")
+
+    return fig
+
+
+def line_chart(df, **kwargs):
+    """
+        col: dataframe's column name
+                e.g. 'vac_rate', 'dose1_pct', 'dose2_pct'
+        col_label: the printed column name in graph
+        grouping: 'state' or 'age_group'
+    """
+
+    fig = px.line(df, x='date', y=kwargs['y'], color=kwargs['color'],
+                category_orders={"state": config.states_rank},
+                labels={'date':'date', kwargs['y']:kwargs['y_label']},
+                range_y=kwargs['range_y'],
+                color_discrete_sequence = px.colors.qualitative.Set1
+        )
+
+    fig = all_charts_style(fig)
+    fig.update_traces(mode="lines")
+
+    return fig
+
+
+def facet_chart(df, **kwargs):
+    ### TODO: Just need the hardwork to label the last point... ###
+    fig=px.line(df,
+                x='date',
+                y=kwargs['y'],
+                labels={'value': kwargs['label_value'], 'variable': 'dose type', 'dose1_pct': 'dose1', 'ma7_vac_rate' : 'vac_rate'},
+                facet_col=kwargs['facet'],
+                facet_col_wrap=kwargs['facet_col_wrap'],
+                category_orders={"state": config.states_rank},
+                color_discrete_sequence = px.colors.qualitative.Dark2
+                )
+
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="left", x=0),
+                      margin=dict(l=0,r=0, t=50, b=20))
+    fig.update_layout({'legend_title_text': ''})
+    fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    legendnames = {'dose1_pct': 'dose1', 'dose2_pct': 'dose2',
+                    'ma7_vac_rate' : 'dose1+dose2', 'ma7_dose1_vac_rate' : 'dose1',
+                    'ma7_dose2_vac_rate' : 'dose2'
+            }
+    fig.for_each_trace(lambda t: t.update(name = legendnames[t.name],
+                                  legendgroup = legendnames[t.name],
+                                  hovertemplate = t.hovertemplate.replace(t.name, legendnames[t.name])
+                                     )
+                  )
+
+    # fig = all_charts_style(fig)
+
+    return fig
+
 
 def vac_status(df, people, jur, stats):
     chart_df = df.query('state==@jur')
