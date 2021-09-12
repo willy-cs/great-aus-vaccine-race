@@ -34,61 +34,13 @@ def main():
 
     cached_df = data.get_data()
     df = cached_df.copy(deep = True)
-    df = data.age_grouping(df, False)
-
-    # list_states = list(sorted(df['state'].unique()))
-    # if 'AUS' in list_states:
-    #     list_states[0] = "AUS"
-    #     list_states[1] = "ACT"
-    list_states = config.states_rank
-    list_age_group = list(sorted(df['age_group'].unique()))
-    list_vac_status = [0,1,2]
-    age_group_10_flag = False
-
-    # u_age_group=''
-    # try:
-    #     if u_age == '' or int(u_age) < MIN_AGE or int(u_age) > MAX_AGE:
-    #         st.write('Invalid age, please retry.')
-    #         return
-    #     else:
-    #         df = data.age_grouping(df,age_group_10_flag)
-    #         (overall_state_df, overall_ag_df, sag_df) = data.save_data(df)
-    #         u_age_group = data.find_age_group(overall_ag_df,u_age)
-    #         latest_date = pd.to_datetime(overall_state_df['date'].max()).date().strftime('%d %b %Y')
-    #         user = compare.User(u_state, u_age_group, u_vac)
-    #         s_short_com = compare.state_comparison(user, overall_state_df)
-    #         a_short_com = compare.ag_comparison(user, overall_ag_df)
-    #         sa_short_com = compare.state_age_group_comparison(user, sag_df)
-    #         state_df=overall_state_df.query('state==@user.state')
-    #         ag_df=overall_ag_df.query('age_group==@user.age_group')
-    #         comp_sag_df=sag_df.query('state==@user.state & age_group==@user.age_group')
-    #         comp_s_df=sag_df.query('state==@user.state')
-    #         comp_ag_df=sag_df.query('age_group==@user.age_group')
-    # except Exception as e:
-    #     st.write(e)
-    #     return
-
-    cached_df = data.get_data()
-    df = cached_df.copy(deep = True)
-    df = data.age_grouping(df, True)
+    age_group_10_flag = True
+    df = data.age_grouping(df, age_group_10_flag)
     (overall_state_df, overall_ag_df, sag_df) = data.save_data(df)
-    st.markdown('### *Daily vaccination status*')
-    col1, col2, col3= st.columns(3)
-    with col1:
-        opt_p=st.selectbox('Show me the daily vaccination status of', ['people 16 or older'])
-    with col2:
-        opt_j=st.selectbox('living in ', list_states)
-    with col3:
-        opt_s=st.selectbox('by', list(config.stats_options.keys()))
+    list_states = config.states_rank
+    list_age_group = list(sorted(overall_ag_df['age_group'].unique()))
 
-    col1, col2 = st.columns([2,1])
-    with col1:
-        st.plotly_chart(chart.vac_status(overall_state_df, opt_p, opt_j, opt_s), use_container_width=True)
-    with col2:
-        st.table( (compare.get_latest(overall_state_df))[['state'] + config.stats_options[opt_s]].assign(hack='').set_index('hack'))
-
-
-
+    ############ JURISDICTION CHARTS ####################
     px_settings={'label_value':'',
                  'facet':'',
                  'facet_col_wrap':4,
@@ -126,14 +78,18 @@ def main():
             px_settings['facet'] = px_settings['color'] = 'age_group'
             px_settings['facet_col_wrap'] = 9
     with col4:
-        opt_ac=st.selectbox('with each graph is a', config.chart_options )
+        select_options={'group' : opt_as[:-1].lower(),
+                        'measure' : opt_aa.lower()
+                        }
+        opt_ac=st.selectbox('with each graph is a', config.chart_options,
+                            format_func=lambda x: select_options.get(x))
 
         if opt_ac == "group":
             fig=chart.facet_chart(plotly_df, **px_settings)
             figs.append(fig)
         elif opt_ac == "measure":
-            for (y, y_label) in [(i[0],i[1]) for i in config.analysis_options[opt_aa]]:
-                (px_settings['y'], px_settings['y_label']) = (y, y_label)
+            for px_info in config.analysis_options[opt_aa]:
+                (px_settings['y'], px_settings['y_label'], px_settings['graph_title']) = px_info
                 fig=chart.line_chart(plotly_df, **px_settings)
                 figs.append(fig)
 
@@ -143,184 +99,104 @@ def main():
                 st.plotly_chart(fig, use_container_width=True)
     else:
         st.plotly_chart(fig, use_container_width=True)
+    ############ JURISDICTION CHARTS ####################
 
-        ############################################################## BIG ####################
+    ############ AGE GROUP CHARTS ####################
 
-        ############################################################## BIG ####################
+    px_settings={'label_value':'',
+                 'facet':'',
+                 'facet_col_wrap':4,
+                 'range_y':None,
+            }
+    figs =[]
 
-    # col1, col2 = st.columns([2,1])
-    # with col1:
-    #     st.plotly_chart(chart.vac_status(overall_state_df, opt_p, opt_j, opt_s), use_container_width=True)
-    # with col2:
-    #     st.table( (compare.get_latest(overall_state_df))[['state'] + config.stats_options[opt_s]].assign(hack='').set_index('hack'))
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        opt_ba=st.selectbox('Show me charts of', list(config.analysis_options.keys()), key='21')
 
-    # col1, col2 = st.columns(2)
-    # with col1:
-    #     st.markdown("### *1st jab coverage*")
-    #     px_settings={'y':'dose1_pct',
-    #                 'y_label':'1st jab coverage',
-    #                 'color':'state',
-    #                 'range_y':[0,100]
-    #             }
-    #     fig=chart.line_chart(overall_state_df, **px_settings)
-    #     st.plotly_chart(fig, use_container_width=True)
+        px_settings['y'] = [i[0] for i in config.analysis_options[opt_ba]]
+        px_settings['label_value'] = config.analysis_options[opt_ba][0][1]
+        if opt_ba == "Vaccination Status":
+            px_settings['range_y'] = [0,100]
 
-    # with col2:
-    #     st.markdown("### *2nd jab coverage*")
-    #     px_settings={'y':'dose2_pct',
-    #                 'y_label':'2nd jab coverage',
-    #                 'color':'state',
-    #                 'range_y':[0,100]
-    #             }
-    #     fig=chart.line_chart(overall_state_df, **px_settings)
-    #     st.plotly_chart(fig, use_container_width=True)
+    with col2:
+        opt_bj=st.selectbox('of people aged', list_age_group)
 
-            #####################
+    with col3:
+        group_options=config.jur_only
+        opt_bs=st.selectbox('across', group_options, key='23')
 
-            ################################
-    # st.dataframe( (compare.get_latest(overall_state_df))[['state'] + config.stats_options[opt_s]].assign(hack='').set_index('hack'))
+        if opt_bs == "Jurisdictions":
+            plotly_df = sag_df.query('age_group == @opt_bj')
+            px_settings['facet'] = px_settings['color'] = 'state'
+            px_settings['facet_col_wrap'] = 9
 
-    # st.markdown("### *Vaccination rate on {}*".format(latest_date))
-    # col1, col2 = st.columns(2)
-    # with col1:
-    #     st.markdown("> {}".format(s_short_com['state_vac_rate']))
-    #     st.plotly_chart(chart.pp_chart(overall_state_df, user,
-    #                                     col='ma7_vac_rate',
-    #                                     col_label='MA-7 vaccination rate',
-    #                                     grouping='state',
-    #                                     hl=hl_graph), use_container_width=True)
+    with col4:
+        select_options={'group' : opt_bs[:-1].lower(),
+                        'measure' : opt_ba.lower()
+                        }
+        opt_bc=st.selectbox('with each graph is a', config.chart_options,
+                            format_func=lambda x: select_options.get(x),
+                            key='24')
 
-    #     # st.plotly_chart(chart.pp_chart(overall_state_df, user,
-    #     #                                 col='ma7_dose1_vac_rate',
-    #     #                                 col_label='MA-7 dose 1 vaccination rate',
-    #     #                                 grouping='state',
-    #     #                                 hl=hl_graph), use_container_width=True)
+        if opt_bc == "group":
+            fig=chart.facet_chart(plotly_df, **px_settings)
+            figs.append(fig)
+        elif opt_bc == "measure":
+            for px_info in config.analysis_options[opt_ba]:
+                (px_settings['y'], px_settings['y_label'], px_settings['graph_title']) = px_info
+                fig=chart.line_chart(plotly_df, **px_settings)
+                figs.append(fig)
 
-    #     st.markdown("> {}".format(a_short_com['ag_vac_rate']))
-    #     st.plotly_chart(chart.pp_chart(overall_ag_df, user,
-    #                                     col='ma7_vac_rate',
-    #                                     col_label='MA-7 vaccination rate',
-    #                                     grouping='age_group',
-    #                                     hl=hl_graph), use_container_width=True)
-
-    # with col2:
-    #     st.markdown("> {}".format(sa_short_com['sag_out_vac_rate']))
-    #     st.plotly_chart(chart.pp_chart(comp_ag_df, user,
-    #                                     col='ma7_vac_rate',
-    #                                     col_label='MA-7 vaccination rate',
-    #                                     grouping='state',
-    #                                     hl=hl_graph), use_container_width=True)
-
-    #     st.markdown("> {}".format(sa_short_com['sag_in_vac_rate']))
-    #     st.plotly_chart(chart.pp_chart(comp_s_df, user,
-    #                                     col='ma7_vac_rate',
-    #                                     col_label='MA-7 vaccination rate',
-    #                                     grouping='age_group',
-    #                                     hl=hl_graph), use_container_width=True)
-
-    # st.markdown("### *First jab coverage on {}*".format(latest_date))
-    # col1, col2 = st.columns(2)
-    # with col1:
-    #     st.markdown("> {}".format(s_short_com['state_dose1']))
-    #     st.plotly_chart(chart.pp_chart(overall_state_df, user,
-    #                                     col='dose1_pct',
-    #                                     col_label='1st dose pct',
-    #                                     grouping='state',
-    #                                     hl=hl_graph), use_container_width=True)
-
-    #     st.markdown("> {}".format(a_short_com['ag_dose1']))
-    #     st.plotly_chart(chart.pp_chart(overall_ag_df, user,
-    #                                     col='dose1_pct',
-    #                                     col_label='1st dose pct',
-    #                                     grouping='age_group',
-    #                                     hl=hl_graph), use_container_width=True)
-
-    # with col2:
-    #     st.markdown("> {}".format(sa_short_com['sag_out_dose1']))
-    #     st.plotly_chart(chart.pp_chart(comp_ag_df, user,
-    #                                     col='dose1_pct',
-    #                                     col_label='1st dose pct',
-    #                                     grouping='state',
-    #                                     hl=hl_graph), use_container_width=True)
+    if len(figs) > 1:
+        for col, fig in zip(st.columns(len(figs)), figs):
+            with col:
+                st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.plotly_chart(fig, use_container_width=True)
+    ############ AGE GROUP CHARTS ####################
 
 
-    #     st.markdown("> {}".format(sa_short_com['sag_in_dose1']))
-    #     st.plotly_chart(chart.pp_chart(comp_s_df, user,
-    #                                     col='dose1_pct',
-    #                                     col_label='1st dose pct',
-    #                                     grouping='age_group',
-    #                                     hl=hl_graph), use_container_width=True)
+    ############ DAILY VAC CHARTS ####################
+    st.markdown('### *Daily vaccination status*')
+    col1, col2, col3= st.columns(3)
+    with col1:
+        opt_p=st.selectbox('Show me the daily vaccination status of', ['people 16 or older'])
+    with col2:
+        opt_j=st.selectbox('living in ', list_states)
+    with col3:
+        opt_s=st.selectbox('by', list(config.stats_options.keys()))
 
-    # st.markdown("### *Fully vaccinated coverage on {}*".format(latest_date))
-    # col1, col2 = st.columns(2)
-    # with col1:
-    #     st.markdown("> {}".format(s_short_com['state_dose2']))
-    #     st.plotly_chart(chart.pp_chart(overall_state_df, user,
-    #                                     col='dose2_pct',
-    #                                     col_label='2nd dose pct',
-    #                                     grouping='state',
-    #                                     hl=hl_graph), use_container_width=True)
-
-    #     st.markdown("> {}".format(a_short_com['ag_dose2']))
-    #     st.plotly_chart(chart.pp_chart(overall_ag_df, user,
-    #                                     col='dose2_pct',
-    #                                     col_label='2nd dose pct',
-    #                                     grouping='age_group',
-    #                                     hl=hl_graph), use_container_width=True)
-
-    # with col2:
-    #     st.markdown("> {}".format(sa_short_com['sag_out_dose2']))
-    #     st.plotly_chart(chart.pp_chart(comp_ag_df, user,
-    #                                     col='dose2_pct',
-    #                                     col_label='2nd dose pct',
-    #                                     grouping='state',
-    #                                     hl=hl_graph), use_container_width=True)
-
-    #     st.markdown("> {}".format(sa_short_com['sag_in_dose2']))
-    #     st.plotly_chart(chart.pp_chart(comp_s_df, user,
-    #                                     col='dose2_pct',
-    #                                     col_label='2nd dose pct',
-    #                                     grouping='age_group',
-    #                                     hl=hl_graph), use_container_width=True)
+    col1, col2 = st.columns([2,1])
+    with col1:
+        st.plotly_chart(chart.vac_status(overall_state_df, opt_p, opt_j, opt_s), use_container_width=True)
+    with col2:
+        st.table( (compare.get_latest(overall_state_df))[['state'] + config.stats_options[opt_s]].assign(hack='').set_index('hack'))
+    ############ DAILY VAC CHARTS ####################
 
 
-    # st.markdown("### *Prediction date to hit 70% and 80% first dose*")
-    # col1, col2 = st.columns(2)
-    # with col1:
-    #     eta_df = compare.construct_eta_data(overall_state_df, 'state', user, dose='dose1')
-    #     st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
-    #                                     user=user,
-    #                                     hl=hl_graph,
-    #                                     annot=True), use_container_width=True)
+    ############# ETA CHARTS ###############
+    # Dummy user
+    user=compare.User()
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("### *Prediction date to hit 70% and 80% first dose*")
+        eta_df = compare.construct_eta_data(overall_state_df, 'state', user, dose='dose1')
+        st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
+                                        user=user,
+                                        hl=False,
+                                        annot=True), use_container_width=True)
 
-    # with col2:
-    #     eta_df = compare.construct_eta_data(overall_ag_df, 'age_group', user, dose='dose1')
-    #     st.plotly_chart(chart.eta_chart(eta_df, group_col='age_group',
-    #                                     user=user,
-    #                                     hl=hl_graph,
-    #                                     annot=False), use_container_width=True)
+    with col2:
+        st.markdown("### *Prediction date to hit 70% and 80% fully vaccinated target*")
+        pass
+        eta_df = compare.construct_eta_data(overall_state_df, 'state', user)
+        st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
+                                        user=user,
+                                        hl=False,
+                                        annot=True), use_container_width=True)
+    ############# ETA CHARTS ###############
 
-    # st.markdown("### *Prediction date to hit 70% and 80% fully vaccinated target*")
-    # col1, col2 = st.columns(2)
-    # with col1:
-    #     eta_df = compare.construct_eta_data(overall_state_df, 'state', user)
-    #     st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
-    #                                     user=user,
-    #                                     hl=hl_graph,
-    #                                     annot=True), use_container_width=True)
-
-    # with col2:
-    #     eta_df = compare.construct_eta_data(overall_ag_df, 'age_group', user)
-    #     st.plotly_chart(chart.eta_chart(eta_df, group_col='age_group',
-    #                                     user=user,
-    #                                     hl=hl_graph,
-    #                                     annot=False), use_container_width=True)
-
-
-    # user=compare.User(state='NSW', age_group='30-39', vac_status=1)
-    # st.markdown("### *Dose 1 vs Dose 2 vaccination rate in {}, across age groups*".format(user.state))
-    # st.plotly_chart(chart.dose1_vs_dose2_rate_facet(sag_df.query('state == @user.state'), facet='age_group'), use_container_width=True)
-    #################
 
     st.subheader('Notes')
     st.markdown('1. Prediction on reaching 70 or 80% fully vaccinated status is based on 7-day moving average rate. This will be updated daily.')
