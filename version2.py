@@ -88,11 +88,26 @@ def main():
         st.table( (compare.get_latest(overall_state_df))[['state'] + config.stats_options[opt_s]].assign(hack='').set_index('hack'))
 
 
-    col1, col2, col3= st.columns(3)
+
+    px_settings={'label_value':'',
+                 'facet':'',
+                 'facet_col_wrap':4,
+                 'range_y':None,
+            }
+    figs =[]
+
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         opt_aa=st.selectbox('Show me charts of', list(config.analysis_options.keys()))
+
+        px_settings['y'] = [i[0] for i in config.analysis_options[opt_aa]]
+        px_settings['label_value'] = config.analysis_options[opt_aa][0][1]
+        if opt_aa == "Vaccination Status":
+            px_settings['range_y'] = [0,100]
+
     with col2:
         opt_aj=st.selectbox('in ', list_states)
+
     with col3:
         group_options=config.grouping_options
         if opt_aj != "AUS":
@@ -100,31 +115,38 @@ def main():
 
         opt_as=st.selectbox('across', group_options)
 
-    px_settings={'y':config.analysis_options[opt_aa],
-                 'label_value':'',
-                 'facet':'',
-                 'facet_col_wrap':4,
-            }
+        if opt_as == "Jurisdictions":
+            plotly_df = overall_state_df
+            px_settings['facet'] = px_settings['color'] = 'state'
+            px_settings['facet_col_wrap'] = 9
+        elif opt_as == "Age Groups":
+            plotly_df = overall_ag_df
+            if opt_aj != "AUS":
+                plotly_df = sag_df.query('state == @opt_aj')
+            px_settings['facet'] = px_settings['color'] = 'age_group'
+            px_settings['facet_col_wrap'] = 9
+    with col4:
+        opt_ac=st.selectbox('with each graph is a', config.chart_options )
 
-    if opt_aa == 'Vaccination Rate':
-        px_settings['label_value'] = 'MA-7 vac rate'
-    elif opt_aa == 'Vaccination Status':
-        px_settings['label_value'] = 'vac coverage'
+        if opt_ac == "group":
+            fig=chart.facet_chart(plotly_df, **px_settings)
+            figs.append(fig)
+        elif opt_ac == "measure":
+            for (y, y_label) in [(i[0],i[1]) for i in config.analysis_options[opt_aa]]:
+                (px_settings['y'], px_settings['y_label']) = (y, y_label)
+                fig=chart.line_chart(plotly_df, **px_settings)
+                figs.append(fig)
+
+    if len(figs) > 1:
+        for col, fig in zip(st.columns(len(figs)), figs):
+            with col:
+                st.plotly_chart(fig, use_container_width=True)
     else:
-        return
+        st.plotly_chart(fig, use_container_width=True)
 
-    if opt_as == "Jurisdictions":
-        plotly_df = overall_state_df
-        px_settings['facet'] = 'state'
-        px_settings['facet_col_wrap'] = 9
-    elif opt_as == "Age Groups":
-        plotly_df = overall_ag_df
-        px_settings['facet'] = 'age_group'
-        px_settings['facet_col_wrap'] = 9
+        ############################################################## BIG ####################
 
-    fig=chart.facet_chart(plotly_df, **px_settings)
-    st.plotly_chart(fig, use_container_width=True)
-
+        ############################################################## BIG ####################
 
     # col1, col2 = st.columns([2,1])
     # with col1:
@@ -132,118 +154,31 @@ def main():
     # with col2:
     #     st.table( (compare.get_latest(overall_state_df))[['state'] + config.stats_options[opt_s]].assign(hack='').set_index('hack'))
 
+    # col1, col2 = st.columns(2)
+    # with col1:
+    #     st.markdown("### *1st jab coverage*")
+    #     px_settings={'y':'dose1_pct',
+    #                 'y_label':'1st jab coverage',
+    #                 'color':'state',
+    #                 'range_y':[0,100]
+    #             }
+    #     fig=chart.line_chart(overall_state_df, **px_settings)
+    #     st.plotly_chart(fig, use_container_width=True)
 
-
-    # return
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("### *1st jab coverage*")
-        px_settings={'y':'dose1_pct',
-                    'y_label':'1st jab coverage',
-                    'color':'state',
-                    'range_y':[0,100]
-                }
-        fig=chart.line_chart(overall_state_df, **px_settings)
-        st.plotly_chart(fig, use_container_width=True)
-
-    with col2:
-        st.markdown("### *2nd jab coverage*")
-        px_settings={'y':'dose2_pct',
-                    'y_label':'2nd jab coverage',
-                    'color':'state',
-                    'range_y':[0,100]
-                }
-        fig=chart.line_chart(overall_state_df, **px_settings)
-        st.plotly_chart(fig, use_container_width=True)
+    # with col2:
+    #     st.markdown("### *2nd jab coverage*")
+    #     px_settings={'y':'dose2_pct',
+    #                 'y_label':'2nd jab coverage',
+    #                 'color':'state',
+    #                 'range_y':[0,100]
+    #             }
+    #     fig=chart.line_chart(overall_state_df, **px_settings)
+    #     st.plotly_chart(fig, use_container_width=True)
 
             #####################
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("### *1st jab coverage*")
-        px_settings={'y':'dose1_pct',
-                    'y_label':'1st jab coverage',
-                    'color':'age_group',
-                    'range_y':[0,100]
-                }
-        fig=chart.line_chart(overall_ag_df, **px_settings)
-        st.plotly_chart(fig, use_container_width=True)
-
-    with col2:
-        st.markdown("### *2nd jab coverage*")
-        px_settings={'y':'dose2_pct',
-                    'y_label':'2nd jab coverage',
-                    'color':'age_group',
-                    'range_y':[0,100]
-                }
-        fig=chart.line_chart(overall_ag_df, **px_settings)
-        st.plotly_chart(fig, use_container_width=True)
-
             ################################
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown("### *Overall vac rate*")
-        st.plotly_chart(chart.vac_rate_chart(overall_state_df,
-                                        col='ma7_vac_rate',
-                                        col_label='MA-7 vac rate',
-                                        grouping='state',
-                                        ), use_container_width=True)
-
-    with col2:
-        st.markdown("### *1st dose vac rate*")
-        st.plotly_chart(chart.vac_rate_chart(overall_state_df,
-                                        col='ma7_dose1_vac_rate',
-                                        col_label='MA-7 1st dose vac rate',
-                                        grouping='state',
-                                        ), use_container_width=True)
-    with col3:
-        st.markdown("### *2nd dose vac rate*")
-        st.plotly_chart(chart.vac_rate_chart(overall_state_df,
-                                        col='ma7_dose2_vac_rate',
-                                        col_label='MA-7 2nd dose vac rate',
-                                        grouping='state',
-                                        ), use_container_width=True)
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown("### *Overall vac rate*")
-        st.plotly_chart(chart.vac_rate_chart(overall_ag_df,
-                                        col='ma7_vac_rate',
-                                        col_label='MA-7 vac rate',
-                                        grouping='age_group',
-                                        ), use_container_width=True)
-
-    with col2:
-        st.markdown("### *1st dose vac rate*")
-        st.plotly_chart(chart.vac_rate_chart(overall_ag_df,
-                                        col='ma7_dose1_vac_rate',
-                                        col_label='MA-7 1st dose vac rate',
-                                        grouping='age_group',
-                                        ), use_container_width=True)
-    with col3:
-        st.markdown("### *2nd dose vac rate*")
-        st.plotly_chart(chart.vac_rate_chart(overall_ag_df,
-                                        col='ma7_dose2_vac_rate',
-                                        col_label='MA-7 2nd dose vac rate',
-                                        grouping='age_group',
-                                        ), use_container_width=True)
     # st.dataframe( (compare.get_latest(overall_state_df))[['state'] + config.stats_options[opt_s]].assign(hack='').set_index('hack'))
-
-    # st.markdown("### *Vaccination status on {}*".format(latest_date))
-    # col1, col2, col3 = st.columns(3)
-    # with col1:
-    #     st.markdown("> {}".format(s_short_com['state_vac_status']))
-    #     st.plotly_chart(chart.vac_status_dist_chart(state_df, user, hl=hl_graph), use_container_width=True)
-
-    # with col2:
-    #     st.markdown("> {}".format(a_short_com['ag_vac_status']))
-    #     st.plotly_chart(chart.vac_status_dist_chart(ag_df, user, hl=hl_graph), use_container_width=True)
-
-    # with col3:
-    #     st.markdown("> {}".format(sa_short_com['sag_in_vac_status']))
-    #     st.plotly_chart(chart.vac_status_dist_chart(comp_sag_df, user, hl=hl_graph), use_container_width=True)
 
     # st.markdown("### *Vaccination rate on {}*".format(latest_date))
     # col1, col2 = st.columns(2)
@@ -382,9 +317,9 @@ def main():
     #                                     annot=False), use_container_width=True)
 
 
-    user=compare.User(state='NSW', age_group='30-39', vac_status=1)
-    st.markdown("### *Dose 1 vs Dose 2 vaccination rate in {}, across age groups*".format(user.state))
-    st.plotly_chart(chart.dose1_vs_dose2_rate_facet(sag_df.query('state == @user.state'), facet='age_group'), use_container_width=True)
+    # user=compare.User(state='NSW', age_group='30-39', vac_status=1)
+    # st.markdown("### *Dose 1 vs Dose 2 vaccination rate in {}, across age groups*".format(user.state))
+    # st.plotly_chart(chart.dose1_vs_dose2_rate_facet(sag_df.query('state == @user.state'), facet='age_group'), use_container_width=True)
     #################
 
     st.subheader('Notes')
