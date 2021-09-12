@@ -6,6 +6,7 @@ import datetime
 import sys
 import os
 import streamlit as st
+import config
 
 import matplotlib.pyplot as plt
 
@@ -49,6 +50,7 @@ def get_data():
     aus_df=get_national_fig(df)
     df=pd.concat([df,aus_df], ignore_index=True)
     df['date'] = pd.to_datetime(df['date'])
+    df['state'] = pd.Categorical(df['state'], config.states_rank)
     df=df.sort_values(['date', 'state', 'age_lower'], ascending=True)
 
     return df
