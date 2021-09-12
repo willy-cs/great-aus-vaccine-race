@@ -191,7 +191,8 @@ def construct_eta_data(df, group_col, user, dose='dose2'):
     eta_df = get_latest(df)
     eta_df = rank_columns(eta_df)
     eta_df = eta_df[cols].reset_index(drop=True).sort_values(group_col)
-    eta_df['annot_y'] = eta_df[group_col].rank().astype(int)-1
+    eta_df = eta_df.sort_values(group_col)
+    eta_df['annot_y'] = eta_df[group_col].reset_index(drop=True).index.astype(int)
 
     eta_df.rename(columns = {eta_70_col : '70%', eta_80_col : '80%' }, inplace=True)
     eta_df = pd.melt(eta_df, id_vars=['date', group_col, 'annot_y'], value_vars=['70%', '80%'],
