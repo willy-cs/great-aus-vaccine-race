@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 from itertools import cycle
 import config
+import compare
+import datetime
 
 VAC_STATUS_PP = ['unvac_pct', 'dose1_pct', 'dose2_pct']
 HL_FADE_COLOUR = 'lightgrey'
@@ -13,7 +15,7 @@ def all_charts_style(fig):
     fig.update_traces(mode="markers+lines")
     # fig.update_layout(hovermode='x')
     fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
-                      margin=dict(l=0,r=0, t=50, b=20),
+                      margin=dict(l=0,r=0, t=80, b=20),
             )
     fig.update_layout({'legend_title_text': ''})
     fig.update_xaxes(showspikes=True)
@@ -74,12 +76,13 @@ def eta_chart(df, group_col, user, hl=False, annot=False):
     color_70_hl = 'rgb(47,138,196)'
     discrete_map_task = { '70%': color_70_default, '80%': color_80_default }
     fig = px.timeline(df, x_start="date", x_end="est_target_date", y=group_col,
-                        color='eta', color_discrete_map=discrete_map_task)
+                        color='eta', color_discrete_map=discrete_map_task,
+                        category_orders={"state": config.states_rank},
+                        )
     fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0, traceorder='reversed'),
                         margin=dict(l=0,r=0, t=50, b=20),
                   )
     fig.update_layout({'legend_title_text': ''})
-    fig.update_yaxes(autorange="reversed")
     fig.data[0].hovertemplate='80% Target Est=%{x}<br>' + group_col + '=%{y}<extra></extra>'
     fig.data[1].hovertemplate='70% Target Est=%{x}<br>' + group_col + '=%{y}<extra></extra>'
 
@@ -102,18 +105,21 @@ def eta_chart(df, group_col, user, hl=False, annot=False):
         for idx, i in df.iterrows():
             an = dict()
             if (i['est_target_date'] <= i['date']):
-                an['x'] = ''
+                an['x'] = i['annot_x']
+                an['text'] = ''
             else:
                 an['x'] = i['annot_x']
-            an['y'] = i['annot_y']
-            an['text'] = i['est_target_date'].strftime('%b %d')
+                an['text'] = i['est_target_date'].strftime('%b %d')
+            an['y'] = df[group_col].nunique() - 1 - i['annot_y']
 
             an['showarrow'] = False
-            an['font'] = {'color' : 'White'}
+            # an['font'] = {'color' : 'White'}
+            an['font'] = {'color' : 'Black'}
             annots.append(an)
 
         fig.update_layout(annotations=annots)
 
+    # fig.update_yaxes(autorange="reversed")
     return fig
 
 
@@ -190,6 +196,40 @@ def line_chart(df, **kwargs):
     fig = all_charts_style(fig)
     fig.update_traces(mode="lines")
 
+    # line annotations
+    ann=[]
+    latest_df = compare.get_latest(df)
+    grouping=kwargs['color']
+    for i in latest_df[kwargs['color']].unique():
+        ann.append(
+                {'x': df['date'].max() + datetime.timedelta(days=2),
+                'y': latest_df[latest_df[grouping] == i][kwargs['y']].max(),
+                'text': i,
+                'showarrow': False
+                }
+        )
+    fig.update_layout(
+            title=dict(font=dict(size=20),
+                        text=kwargs['graph_title'],
+                        xanchor='center',
+                        yanchor='top',
+                        x=0.5,
+                        y=1,
+                    ),
+            annotations=ann,
+            hoverlabel=dict(
+                bgcolor="white",
+                font_size=16,
+                font_family="Rockwell"
+            ),
+            hovermode='x',
+        )
+
+    fig.update_traces(
+        hovertemplate='%{y}'
+    )
+
+
     return fig
 
 
@@ -205,7 +245,7 @@ def facet_chart(df, **kwargs):
                 color_discrete_sequence = px.colors.qualitative.Dark2
                 )
 
-    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="left", x=0),
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="center", x=0.5),
                       margin=dict(l=0,r=0, t=50, b=20))
     fig.update_layout({'legend_title_text': ''})
     fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
@@ -215,10 +255,21 @@ def facet_chart(df, **kwargs):
             }
     fig.for_each_trace(lambda t: t.update(name = legendnames[t.name],
                                   legendgroup = legendnames[t.name],
-                                  hovertemplate = t.hovertemplate.replace(t.name, legendnames[t.name])
                                      )
-                  )
+                    )
 
+    fig.update_traces(
+        hovertemplate='%{y}'
+    )
+
+    fig.update_layout(
+            hoverlabel=dict(
+                bgcolor="white",
+                font_size=16,
+                font_family="Rockwell"
+            ),
+            hovermode='x unified',
+        )
     # fig = all_charts_style(fig)
 
     return fig
