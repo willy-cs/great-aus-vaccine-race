@@ -12,8 +12,8 @@ vac_rate_info = [['ma7_dose1_vac_rate', 'MA-7 vac rate', 'Dose 1 vac rate'],
                 ['ma7_dose2_vac_rate', 'MA-7 vac rate', 'Dose 2 vac rate'],
                 ['ma7_vac_rate', 'MA-7 vac rate', 'Dose1 + Dose 2 vac rate']]
 
-vac_status_info = [['dose1_pct', 'coverage', 'Dose 1 coverage'],
-                    ['dose2_pct', 'coverage', 'Dose 2 coverage']]
+vac_status_info = [['dose1_pct', 'coverage (%)', 'Dose 1 coverage'],
+                    ['dose2_pct', 'coverage (%)', 'Dose 2 coverage']]
 
 analysis_options={'Vaccination Rate' : vac_rate_info,
                    'Vaccination Status' : vac_status_info,
@@ -24,6 +24,7 @@ chart_options=['group', 'measure']
 
 grouping_options=['Jurisdictions', 'Age Groups']
 age_group_only=['Age Groups']
+jur_only=['Jurisdictions']
 
 MIN_AGE=16
 MAX_AGE=999
