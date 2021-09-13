@@ -20,7 +20,7 @@ analysis_options={'Vaccination Rate' : vac_rate_info,
                     }
 
 
-chart_options=['group', 'measure']
+chart_options=['measure', 'group']
 
 grouping_options=['Jurisdictions', 'Age Groups']
 age_group_only=['Age Groups']
