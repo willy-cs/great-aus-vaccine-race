@@ -31,6 +31,7 @@ st.set_page_config(page_title='Welcome to the Great Australian COVID-19 Vaccine 
 
 def main():
     st.markdown('# It is a race!')
+    st.markdown('This page is optimised for wide screen. If you are viewing this on your phone, you might have better luck if you rotate it 90 degrees.')
 
     cached_df = data.get_data()
     df = cached_df.copy(deep = True)
