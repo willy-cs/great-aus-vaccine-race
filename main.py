@@ -112,22 +112,35 @@ def main():
         st.plotly_chart(fig, use_container_width=True)
     ############ MAIN CHARTS ####################
 
+    ############ HEATMAP CHARTS ##################
+    st.markdown('### *Vaccination status heatmap*')
+    fig1, fig2 = chart.coverage_heatmap(sag_df, overall_state_df)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.plotly_chart(fig1, use_container_width=True)
+    with col2:
+        st.plotly_chart(fig2, use_container_width=True)
+
+    ############ HEATMAP CHARTS ##################
+
 
     ############ DAILY VAC CHARTS ####################
-    st.markdown('### *Daily vaccination status*')
-    col1, col2, col3= st.columns(3)
-    with col1:
-        opt_p=st.selectbox('Show me the daily vaccination status of', ['people 16 or older'])
-    with col2:
-        opt_j=st.selectbox('living in ', list_states)
-    with col3:
-        opt_s=st.selectbox('by', list(config.stats_options.keys()))
+    # st.markdown('### *Daily vaccination status*')
+    # col1, col2, col3= st.columns(3)
+    # with col1:
+    #     opt_p=st.selectbox('Show me the daily vaccination status of', ['people 16 or older'])
+    # with col2:
+    #     opt_j=st.selectbox('living in ', list_states)
+    # with col3:
+    #     opt_s=st.selectbox('by', list(config.stats_options.keys()))
 
-    col1, col2 = st.columns([2,1])
-    with col1:
-        st.plotly_chart(chart.vac_status(overall_state_df, opt_p, opt_j, opt_s), use_container_width=True)
-    with col2:
-        st.table( (compare.get_latest(overall_state_df))[['state'] + config.stats_options[opt_s]].assign(hack='').set_index('hack'))
+    # col1, col2 = st.columns([2,1])
+    # with col1:
+    #     st.plotly_chart(chart.vac_status(overall_state_df, opt_p, opt_j, opt_s), use_container_width=True)
+    # with col2:
+    #     pass
+        # st.table( (compare.get_latest(overall_state_df))[['state'] + config.stats_options[opt_s]].assign(hack='').set_index('hack'))
     ############ DAILY VAC CHARTS ####################
 
 
@@ -158,11 +171,11 @@ def main():
     st.markdown('1. Prediction on reaching 70 or 80% fully vaccinated status is based on 7-day moving average rate. This will be updated daily.')
     st.markdown('2. My source data is from https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf, extracted from [WA Health](https://www.wa.gov.au/sites/default/files/2021-06/COVID-19-Vaccination-Dashboard-Guide-for-Interpretation.pdf) (second dose by state data prior to 1st July 2021) and [Department of Health](https://www.health.gov.au/using-our-websites/copyright) (all other data) by [Ken Tsang](https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf). I might have modified the data to correct any mistakes or errors I perceive or notice.')
     st.markdown('3. This page does not aim or claim to be authoritative of vaccine data roll out. I do not guarantee its accuracy. Use at your own risk, and I take no responsibility of any loss that might have occurred.')
-    st.markdown('4. This page is hosted on a free server. Please excuse its sluggishness.')
-    st.markdown('5. This page is always going to be under development.')
-
-
-
+    st.markdown('4. My numbers for AUS are different than official government websites. I sum up all the doses for all jurisdictions, or use the total population of all jurisdictions. The government said that there is a small number of population who live in other territories and/or cannot be geocoded to the 8 states and territories of Australia.')
+    st.markdown('5. I built this page for my own purpose.')
+    st.markdown('6. This page is hosted on a free server. Please excuse its sluggishness.')
+    st.markdown('7. This page is always going to be under development.')
+    st.markdown('8. Get jabbed! Check out vaccine availability from [COVID19 Near Me](https://covid19nearme.com.au), or [covid queue](https://covidqueue.com), or [vaccine.wfltaylor.com](https://vaccine.wfltaylor.com)')
 
 if __name__ == "__main__":
     main()
