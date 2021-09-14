@@ -39,8 +39,9 @@ def main():
     (overall_state_df, overall_ag_df, sag_df) = data.save_data(df)
     list_states = config.states_rank
     list_age_group = list(sorted(overall_ag_df['age_group'].unique()))
+    latest_date = df['date'].max().date().strftime('%d %b %Y')
 
-    st.markdown("### Data last updated: {}".format(df['date'].max().date().strftime('%d %b %Y')))
+    st.markdown("### Data last updated: {}".format(latest_date))
     ############ MAIN CHARTS ####################
     px_settings={'label_value':'',
                  'facet':'',
@@ -113,7 +114,7 @@ def main():
     ############ MAIN CHARTS ####################
 
     ############ HEATMAP CHARTS ##################
-    st.markdown('### *Vaccination status heatmap*')
+    st.markdown('### *Vaccination status heatmap as of {}*'.format(latest_date))
     fig1, fig2 = chart.coverage_heatmap(sag_df, overall_state_df)
     col1, col2 = st.columns(2)
 
