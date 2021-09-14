@@ -1,4 +1,5 @@
 import plotly.express as px
+import plotly.figure_factory as ff
 import pandas as pd
 import numpy as np
 from itertools import cycle
@@ -208,6 +209,9 @@ def line_chart(df, **kwargs):
                 'showarrow': False
                 }
         )
+    # ann.append({'x': df['date'].min()+datetime.timedelta(days=7),
+    #                 'y':1, 'yanchor':'top', 'yref':'paper',
+    #                 'text': 'vaccine.willy-is.me', 'showarrow': False})
     fig.update_layout(
             title=dict(font=dict(size=20),
                         text=kwargs['graph_title'],
@@ -234,7 +238,6 @@ def line_chart(df, **kwargs):
 
 
 def facet_chart(df, **kwargs):
-    ### TODO: Just need the hardwork to label the last point... ###
     fig=px.line(df,
                 x='date',
                 y=kwargs['y'],
@@ -270,7 +273,6 @@ def facet_chart(df, **kwargs):
             ),
             hovermode='x unified',
         )
-    # fig = all_charts_style(fig)
 
     return fig
 
@@ -334,3 +336,55 @@ def vac_status(df, people, jur, stats):
     )
 
     return fig
+
+
+def heatmap_data(sag_df, overall_state_df, col='dose1_pct'):
+    states_df = compare.get_latest(overall_state_df)
+
+    l_df = compare.get_latest(sag_df)
+
+    l_df = pd.concat([states_df, l_df])[['state', 'age_group', 'dose1_pct', 'dose2_pct']]
+    l_df['age_group'] = np.where(l_df['age_group'] == '16_or_above', 'tot 16_or_above' ,l_df['age_group'])
+    l_df['dose1_pct'] = np.where(l_df['dose1_pct'] >= 94.99, 95, l_df['dose1_pct'])
+    # l_df['dose2_pct'] = np.where(l_df['age_group'] == '16_or_above', 'tot 16_or_above' ,l_df['age_group'])
+    l_df = l_df.sort_values(['state', 'age_group'])
+
+    x = l_df['state'].unique()
+    y = l_df['age_group'].unique()
+    #z = [[state1, age_group1, state1_agegroup2...
+    #     [state2]
+    z = []
+    for i in y:
+        row = l_df.query('age_group==@i').sort_values('state')[col].to_list()
+        # row2 = l_df.query('age_group==@i').sort_values('state')['dose2_pct'].to_list()
+        z.append(row)
+
+    return x, y, z
+
+def coverage_heatmap(sag_df, overall_state_df):
+    """
+    Need to prepare data for easy plotting
+    """
+
+    figs = []
+
+    for (c, _, title) in config.vac_status_info:
+        x, y, z = heatmap_data(sag_df, overall_state_df, col=c)
+        # can try earth, or blues for colorscale
+        fig = ff.create_annotated_heatmap(z,x=list(x),y=list(y), colorscale='pubu', zmin=0, zmax=100)
+        fig.update_yaxes(autorange='reversed')
+        fig.update_layout(
+            title=dict(font=dict(size=20),
+                        text=title,
+                        xanchor='center',
+                        yanchor='top',
+                        x=0.5,
+                        y=0.89,
+                    ),
+        )
+        # No hover effect
+        fig.update_traces(hoverinfo='skip')
+
+        figs.append(fig)
+
+    return figs
