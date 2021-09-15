@@ -46,20 +46,75 @@ def get_data():
     df['SECOND_DOSE_COUNT']=df['SECOND_DOSE_COUNT'].fillna(0).astype(int)
     df['DOSE1_CNT']=df['DOSE1_CNT'].fillna(0).astype(int)
     df['DOSE2_CNT']=df['DOSE2_CNT'].fillna(0).astype(int)
+    df['DOSE1_CNT']=df[['DOSE1_CNT', 'FIRST_DOSE_COUNT']].max(axis=1)
+    df['DOSE2_CNT']=df[['DOSE2_CNT', 'SECOND_DOSE_COUNT']].max(axis=1)
+    df.drop(columns=['FIRST_DOSE_COUNT', 'SECOND_DOSE_COUNT'], inplace=True)
     df.columns = df.columns.str.lower()
-    aus_df=get_national_fig(df)
-    df=pd.concat([df,aus_df], ignore_index=True)
     df['date'] = pd.to_datetime(df['date'])
+    aus_df=get_national_data()
+    df=pd.concat([df,aus_df], ignore_index=True)
     df['state'] = pd.Categorical(df['state'], config.states_rank)
+    df['dose1_cnt'] = df['dose1_cnt'].astype(int)
+    df['dose2_cnt'] = df['dose2_cnt'].astype(int)
+    df['abspop_jun2020'] = df['abspop_jun2020'].astype(int)
     df=df.sort_values(['date', 'state', 'age_lower'], ascending=True)
+    # The day where we have data for each individual states
+    df=df.query('date > "27-07-2021"')
 
     return df
 
-def get_national_fig(df):
-    aus_df = df.groupby(['date', 'age_lower', 'age_upper'])[['first_dose_count', 'second_dose_count', 'dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].sum().reset_index()
-    aus_df['state'] = 'AUS'
+def get_national_data():
+    data_url = "https://vaccinedata.covid19nearme.com.au/data/air.csv"
+    df = pd.read_csv(data_url)
+    national_pop_df = pd.read_csv('national_pop.csv')
+    age_prefix=['AIR_12_15_', 'AIR_AUS_16_PLUS_', 'AIR_AUS_50_PLUS_', 'AIR_AUS_70_PLUS_', 'AIR_95_PLUS_']
+    attr_suffix=['FIRST_DOSE_PCT', 'SECOND_DOSE_PCT', 'FIRST_DOSE_COUNT', 'SECOND_DOSE_COUNT', 'POPULATION']
+    rename_cols = ['date', 'dose1_pct', 'dose2_pct', 'dose1_cnt', 'dose2_cnt', 'abspop_jun2020', 'age_lower', 'age_upper']
+    adf=pd.DataFrame()
+    for p in age_prefix:
+        sub_df=pd.DataFrame()
+        cols=['DATE_AS_AT'] + [p+s for s in attr_suffix]
+        if p=="AIR_95_PLUS_":
+            cols=cols[:-1] # 95 plus doesn't have population information
+            sub_df = df[cols]
+            sub_df['POPULATION'] = 52912
+            sub_df['AGE_LOWER'] = 95
+            sub_df['AGE_UPPER'] = 999
+        elif p=="AIR_12_15_":
+            cols=cols[:-1] # 12-15 doesn't have population information
+            sub_df = df[cols]
+            sub_df['POPULATION'] = 1243990
+            sub_df['AGE_LOWER'] = 12
+            sub_df['AGE_UPPER'] = 15
+        else:
+            sub_df = df[cols]
+            sub_df['AGE_LOWER'] = int(p.split('_')[2])
+            sub_df['AGE_UPPER'] = 999
 
-    return aus_df
+        sub_df.columns = rename_cols
+        adf=pd.concat([adf, sub_df])
+
+    # special cases for 5 year ranges
+    attr_suffix=['FIRST_DOSE_PCT', 'SECOND_DOSE_PCT', 'FIRST_DOSE_COUNT', 'SECOND_DOSE_COUNT']
+    for i in range(20,95,5):
+        sub_df
+        lower=i
+        upper=i+4
+        ar=str(lower) + "-"+ str(upper)
+        col='AIR_{}_{}_'.format(lower,upper)
+        cols=['DATE_AS_AT'] + [col+s for s in attr_suffix]
+        sub_df = df[cols]
+        sub_df['POPULATION'] = national_pop_df.query('age_range==@ar')['pop'].iloc[0]
+        sub_df['AGE_LOWER'] = lower
+        sub_df['AGE_UPPER'] = upper
+        sub_df.columns = rename_cols
+        adf=pd.concat([adf, sub_df])
+
+    adf['state'] = 'AUS'
+    adf['date'] = pd.to_datetime(adf['date'])
+
+    adf=adf.dropna()
+    return adf
 
 def age_grouping(df, age_group_10_flag):
     df['age_group'] = df['age_lower'].astype(str) + '-' + df['age_upper'].astype(str)
@@ -92,7 +147,7 @@ def age_grouping_10y(df):
                         np.where(df['age_group'].isin(['80-84', '85-89']), '80+',
                         np.where(df['age_group'].isin(['90-94', '95-999']), '80+', df['age_group']))))))))
 
-    df=df.groupby(['date', 'state', 'age_group'])[['first_dose_count', 'second_dose_count', 'dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].agg(sum).reset_index()
+    df=df.groupby(['date', 'state', 'age_group'])[['dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].agg(sum).reset_index()
 
     return df
 
@@ -143,23 +198,18 @@ def save_data(df):
     sag_df = df[~df['age_group'].str.endswith('_or_above')].copy(deep = True)
 
     # further preprocessing for overall_state_df
-    overall_state_df.drop(columns=['dose1_cnt', 'dose2_cnt'], inplace=True)
-    overall_state_df.rename(columns={'first_dose_count': 'dose1_cnt',
-                                     'second_dose_count': 'dose2_cnt'}, inplace=True)
     overall_state_df['dose1_pct'] = round(100 * overall_state_df['dose1_cnt']/ overall_state_df['abspop_jun2020'], 2)
     overall_state_df['dose2_pct'] = round(100 * overall_state_df['dose2_cnt']/ overall_state_df['abspop_jun2020'], 2)
     overall_state_df = overall_state_df.query('age_group == "16_or_above"')
     overall_state_df = overall_state_df.groupby('state').apply(lambda d: extra_calculation(d))
 
     # further preprocessing for overall_ag_df
-    overall_ag_df.drop(columns = ['first_dose_count', 'second_dose_count'], inplace = True)
     overall_ag_df = overall_ag_df.groupby(['date', 'age_group'])[['dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].sum().reset_index()
     overall_ag_df['dose1_pct'] = round(100 * overall_ag_df['dose1_cnt']/ overall_ag_df['abspop_jun2020'], 3)
     overall_ag_df['dose2_pct'] = round(100 * overall_ag_df['dose2_cnt']/ overall_ag_df['abspop_jun2020'], 3)
     overall_ag_df = overall_ag_df.groupby('age_group').apply(lambda d: extra_calculation(d))
 
     # further preprocessing for sag_df
-    sag_df.drop(columns = ['first_dose_count', 'second_dose_count'], inplace = True)
     sag_df = sag_df.groupby(['state', 'age_group']).apply(lambda d: extra_calculation(d))
     sag_df['dose1_pct'] = round(100 * sag_df['dose1_cnt']/ sag_df['abspop_jun2020'], 2)
     sag_df['dose2_pct'] = round(100 * sag_df['dose2_cnt']/ sag_df['abspop_jun2020'], 2)

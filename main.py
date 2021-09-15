@@ -31,6 +31,7 @@ st.set_page_config(page_title='Welcome to the Great Australian COVID-19 Vaccine 
 
 def main():
     st.markdown('# It is a race!')
+    st.markdown('This page is optimised for wide screen. If you are viewing this on your phone, you might have better luck if you rotate it 90 degrees.')
 
     cached_df = data.get_data()
     df = cached_df.copy(deep = True)
@@ -172,11 +173,10 @@ def main():
     st.markdown('1. Prediction on reaching 70 or 80% fully vaccinated status is based on 7-day moving average rate. This will be updated daily.')
     st.markdown('2. My source data is from https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf, extracted from [WA Health](https://www.wa.gov.au/sites/default/files/2021-06/COVID-19-Vaccination-Dashboard-Guide-for-Interpretation.pdf) (second dose by state data prior to 1st July 2021) and [Department of Health](https://www.health.gov.au/using-our-websites/copyright) (all other data) by [Ken Tsang](https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf). I might have modified the data to correct any mistakes or errors I perceive or notice.')
     st.markdown('3. This page does not aim or claim to be authoritative of vaccine data roll out. I do not guarantee its accuracy. Use at your own risk, and I take no responsibility of any loss that might have occurred.')
-    st.markdown('4. My numbers for AUS are different than official government websites. I sum up all the doses for all jurisdictions, or use the total population of all jurisdictions. The government said that there is a small number of population who live in other territories and/or cannot be geocoded to the 8 states and territories of Australia.')
-    st.markdown('5. I built this page for my own purpose.')
-    st.markdown('6. This page is hosted on a free server. Please excuse its sluggishness.')
-    st.markdown('7. This page is always going to be under development.')
-    st.markdown('8. Get jabbed! Check out vaccine availability from [COVID19 Near Me](https://covid19nearme.com.au), or [covid queue](https://covidqueue.com), or [vaccine.wfltaylor.com](https://vaccine.wfltaylor.com)')
+    st.markdown('4. I built this page for my own purpose. Sorry if it does not meet your expectations.')
+    st.markdown('5. This page is hosted on a free server. Please excuse its sluggishness.')
+    st.markdown('6. This page is always going to be under development.')
+    st.markdown('7. Get jabbed! Check out vaccine availability from [COVID19 Near Me](https://covid19nearme.com.au), or [covid queue](https://covidqueue.com), or [vaccine.wfltaylor.com](https://vaccine.wfltaylor.com)')
 
 if __name__ == "__main__":
     main()

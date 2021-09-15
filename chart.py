@@ -337,16 +337,42 @@ def vac_status(df, people, jur, stats):
 
     return fig
 
+def add_custom_age_groups(l_df, df):
+
+    # for twelve or above
+    df['dose1_pct'] = round(df['dose1_cnt']/df['abspop_jun2020'] * 100, 2)
+    df['dose2_pct'] = round(df['dose2_cnt']/df['abspop_jun2020'] * 100, 2)
+    df['age_group'] = 'tot 12+'
+    l_df=pd.concat([l_df, df[['state', 'age_group', 'dose1_pct', 'dose2_pct']]])
+
+    # for total population
+    df.drop(columns=['abspop_jun2020'], inplace=True) # reset the population
+    state_pop = pd.read_csv('state_total_pop.csv')
+    state_pop['state'] = pd.Categorical(state_pop['state'], config.states_rank)
+    df=df.merge(state_pop, on='state')
+    df['dose1_pct'] = round(df['dose1_cnt']/df['abspop_jun2020'] * 100, 2)
+    df['dose2_pct'] = round(df['dose2_cnt']/df['abspop_jun2020'] * 100, 2)
+    df['age_group'] = 'tot pop'
+    l_df=pd.concat([l_df, df[['state', 'age_group', 'dose1_pct', 'dose2_pct']]])
+
+    return l_df
+
 
 def heatmap_data(sag_df, overall_state_df, col='dose1_pct'):
     states_df = compare.get_latest(overall_state_df)
 
     l_df = compare.get_latest(sag_df)
 
+    # Vacine count per state
+    vaccine_count_df=l_df.\
+                    groupby(['state'])\
+                    [['dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].sum().reset_index()
+
     l_df = pd.concat([states_df, l_df])[['state', 'age_group', 'dose1_pct', 'dose2_pct']]
-    l_df['age_group'] = np.where(l_df['age_group'] == '16_or_above', 'tot 16_or_above' ,l_df['age_group'])
-    l_df['dose1_pct'] = np.where(l_df['dose1_pct'] >= 94.99, 95, l_df['dose1_pct'])
-    # l_df['dose2_pct'] = np.where(l_df['age_group'] == '16_or_above', 'tot 16_or_above' ,l_df['age_group'])
+    l_df['age_group'] = np.where(l_df['age_group'] == '16_or_above', 'tot 16+' ,l_df['age_group'])
+    l_df[col] = np.where(l_df[col] >= 94.99, 95, l_df[col])
+
+    l_df = add_custom_age_groups(l_df, vaccine_count_df)
     l_df = l_df.sort_values(['state', 'age_group'])
 
     x = l_df['state'].unique()
@@ -356,7 +382,6 @@ def heatmap_data(sag_df, overall_state_df, col='dose1_pct'):
     z = []
     for i in y:
         row = l_df.query('age_group==@i').sort_values('state')[col].to_list()
-        # row2 = l_df.query('age_group==@i').sort_values('state')['dose2_pct'].to_list()
         z.append(row)
 
     return x, y, z
@@ -379,9 +404,10 @@ def coverage_heatmap(sag_df, overall_state_df):
                         xanchor='center',
                         yanchor='top',
                         x=0.5,
-                        y=0.89,
+                        y=1,
                     ),
-        )
+        margin=dict(l=0,r=0, t=40, b=20),
+    )
         # No hover effect
         fig.update_traces(hoverinfo='skip')
 
