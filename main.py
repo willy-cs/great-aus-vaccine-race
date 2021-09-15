@@ -176,7 +176,9 @@ def main():
     st.markdown('4. I built this page for my own purpose. Sorry if it does not meet your expectations.')
     st.markdown('5. This page is hosted on a free server. Please excuse its sluggishness.')
     st.markdown('6. This page is always going to be under development.')
-    st.markdown('7. Get jabbed! Check out vaccine availability from [COVID19 Near Me](https://covid19nearme.com.au), or [covid queue](https://covidqueue.com), or [vaccine.wfltaylor.com](https://vaccine.wfltaylor.com)')
+    st.markdown('7. If you find this page useful, feel free to share it.')
+    st.markdown('8. Feedback can be sent to [@ausvacrace](https://twitter.com/ausvacrace) on twitter.')
+    st.markdown('9. Get jabbed! Check out vaccine availability from [COVID19 Near Me](https://covid19nearme.com.au), or [covid queue](https://covidqueue.com), or [vaccine.wfltaylor.com](https://vaccine.wfltaylor.com)')
 
 if __name__ == "__main__":
     main()
