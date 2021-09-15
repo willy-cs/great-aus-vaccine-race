@@ -61,8 +61,6 @@ def get_data():
     # The day where we have data for each individual states
     df=df.query('date > "27-07-2021"')
 
-    df.to_csv('debug.csv', index=False)
-
     return df
 
 def get_national_data():
