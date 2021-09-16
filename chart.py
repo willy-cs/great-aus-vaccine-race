@@ -221,6 +221,8 @@ def line_chart(df, **kwargs):
                         y=1,
                     ),
             annotations=ann,
+            xaxis=dict(fixedrange=True),
+            yaxis=dict(fixedrange=True),
             hoverlabel=dict(
                 bgcolor="white",
                 font_size=16,
@@ -272,6 +274,8 @@ def facet_chart(df, **kwargs):
                 font_family="Rockwell"
             ),
             hovermode='x unified',
+            xaxis=dict(fixedrange=True),
+            yaxis=dict(fixedrange=True),
         )
 
     return fig
@@ -381,7 +385,8 @@ def heatmap_data(sag_df, overall_state_df, col='dose1_pct'):
     #     [state2]
     z = []
     for i in y:
-        row = l_df.query('age_group==@i').sort_values('state')[col].to_list()
+        # convert all values into a single decimal digit for better readibility
+        row = round(l_df.query('age_group==@i').sort_values('state')[col], 1).to_list()
         z.append(row)
 
     return x, y, z

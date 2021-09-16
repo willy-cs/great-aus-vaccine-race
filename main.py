@@ -109,9 +109,9 @@ def main():
     if len(figs) > 1:
         for col, fig in zip(st.columns(len(figs)), figs):
             with col:
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar':False})
     else:
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar':False} )
     ############ MAIN CHARTS ####################
 
     ############ HEATMAP CHARTS ##################
@@ -120,9 +120,9 @@ def main():
     col1, col2 = st.columns(2)
 
     with col1:
-        st.plotly_chart(fig1, use_container_width=True)
+        st.plotly_chart(fig1, use_container_width=True, config={'displayModeBar':False, 'staticPlot':True})
     with col2:
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar':False, 'staticPlot':True})
 
     ############ HEATMAP CHARTS ##################
 
@@ -156,7 +156,9 @@ def main():
         st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
                                         user=user,
                                         hl=False,
-                                        annot=True), use_container_width=True)
+                                        annot=True),
+                                        use_container_width=True,
+                                        config={'displayModeBar':False, 'staticPlot':True})
 
     with col2:
         st.markdown("### *Prediction date to hit 70% and 80% fully vaccinated target*")
@@ -165,7 +167,10 @@ def main():
         st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
                                         user=user,
                                         hl=False,
-                                        annot=True), use_container_width=True)
+                                        annot=True),
+                                        use_container_width=True,
+                                        config={'displayModeBar':False, 'staticPlot':True})
+
     ############# ETA CHARTS ###############
 
 
