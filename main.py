@@ -58,7 +58,7 @@ def main():
         px_settings['y'] = [i[0] for i in config.analysis_options[opt_aa]]
         px_settings['label_value'] = config.analysis_options[opt_aa][0][1]
         if opt_aa == "Vaccination Status":
-            px_settings['range_y'] = [0,100]
+            px_settings['range_y'] = None
 
     with col2:
         opt_ag=st.radio('of people aged', ['all people'] + list_age_group)
