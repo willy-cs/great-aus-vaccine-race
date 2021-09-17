@@ -30,7 +30,7 @@ np.set_printoptions(suppress=True)
 st.set_page_config(page_title='Welcome to the Great Australian COVID-19 Vaccine Race!', layout='wide')
 
 def main():
-    st.markdown('# It is a race!')
+    st.markdown('## It is a race!')
     st.markdown('This page is optimised for wide screen. If you are viewing this on your phone, you might have better luck if you rotate it 90 degrees.')
 
     cached_df = data.get_data()
@@ -41,8 +41,9 @@ def main():
     list_states = config.states_rank
     list_age_group = list(sorted(overall_ag_df['age_group'].unique()))
     latest_date = df['date'].max().date().strftime('%d %b %Y')
+    latest_date = (df['date'].max() +datetime.timedelta(days=1)).date().strftime('%d %b %Y')
 
-    st.markdown("### Data last updated: {}".format(latest_date))
+    st.markdown("### Data is based on reports published on {}".format(latest_date))
     ############ MAIN CHARTS ####################
     px_settings={'label_value':'',
                  'facet':'',
@@ -115,7 +116,7 @@ def main():
     ############ MAIN CHARTS ####################
 
     ############ HEATMAP CHARTS ##################
-    st.markdown('### *Vaccination status heatmap as of {}*'.format(latest_date))
+    st.markdown('### *Vaccination status using reports published on {}*'.format(latest_date))
     fig1, fig2 = chart.coverage_heatmap(sag_df, overall_state_df)
     col1, col2 = st.columns(2)
 
