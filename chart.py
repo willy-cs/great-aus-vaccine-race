@@ -341,23 +341,25 @@ def vac_status(df, people, jur, stats):
 
     return fig
 
-def add_custom_age_groups(l_df, df):
+def add_custom_age_groups(l_df, total_12plus_df):
 
     # for twelve or above
-    df['dose1_pct'] = round(df['dose1_cnt']/df['abspop_jun2020'] * 100, 2)
-    df['dose2_pct'] = round(df['dose2_cnt']/df['abspop_jun2020'] * 100, 2)
-    df['age_group'] = 'tot 12+'
-    l_df=pd.concat([l_df, df[['state', 'age_group', 'dose1_pct', 'dose2_pct']]])
+    total_12plus_df['dose1_pct'] = round(total_12plus_df['dose1_cnt']/total_12plus_df['abspop_jun2020'] * 100, 2)
+    total_12plus_df['dose2_pct'] = round(total_12plus_df['dose2_cnt']/total_12plus_df['abspop_jun2020'] * 100, 2)
+    total_12plus_df['age_group'] = 'tot 12+'
+    l_df=pd.concat([l_df, total_12plus_df[['state', 'age_group', 'dose1_pct', 'dose2_pct']]])
 
     # for total population
-    df.drop(columns=['abspop_jun2020'], inplace=True) # reset the population
+    total_population_df=total_12plus_df.copy(deep=True)
+    total_population_df.drop(columns=['abspop_jun2020'], inplace=True) # reset the population
     state_pop = pd.read_csv('state_total_pop.csv')
     state_pop['state'] = pd.Categorical(state_pop['state'], config.states_rank)
-    df=df.merge(state_pop, on='state')
-    df['dose1_pct'] = round(df['dose1_cnt']/df['abspop_jun2020'] * 100, 2)
-    df['dose2_pct'] = round(df['dose2_cnt']/df['abspop_jun2020'] * 100, 2)
-    df['age_group'] = 'tot pop'
-    l_df=pd.concat([l_df, df[['state', 'age_group', 'dose1_pct', 'dose2_pct']]])
+    total_population_df=total_population_df.merge(state_pop, on='state')
+    total_population_df['dose1_pct'] = round(total_population_df['dose1_cnt']/total_population_df['abspop_jun2020'] * 100, 2)
+    total_population_df['dose2_pct'] = round(total_population_df['dose2_cnt']/total_population_df['abspop_jun2020'] * 100, 2)
+    total_population_df['age_group'] = 'tot pop'
+    l_df=pd.concat([l_df, total_population_df[['state', 'age_group', 'dose1_pct', 'dose2_pct']]])
+
 
     return l_df
 
@@ -367,16 +369,16 @@ def heatmap_data(sag_df, overall_state_df, col='dose1_pct'):
 
     l_df = compare.get_latest(sag_df)
 
-    # Vacine count per state
-    vaccine_count_df=l_df.\
-                    groupby(['state'])\
-                    [['dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].sum().reset_index()
-
+    # This is for each age group coverage, all good here
     l_df = pd.concat([states_df, l_df])[['state', 'age_group', 'dose1_pct', 'dose2_pct']]
     l_df['age_group'] = np.where(l_df['age_group'] == '16_or_above', 'tot 16+' ,l_df['age_group'])
     l_df[col] = np.where(l_df[col] >= 94.99, 95, l_df[col])
 
-    l_df = add_custom_age_groups(l_df, vaccine_count_df)
+
+    # We need to sum up vaccines for 12-15 and 16_or_above
+    extra_doses_1215_df=compare.get_latest(sag_df).query('age_group == "12-15"')[['state', 'age_group','dose1_cnt', 'dose2_cnt', 'abspop_jun2020']]
+    total_12plus_df=pd.concat([states_df, extra_doses_1215_df])[['state', 'age_group', 'dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].groupby('state')[['dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].sum().reset_index()
+    l_df = add_custom_age_groups(l_df, total_12plus_df)
     l_df = l_df.sort_values(['state', 'age_group'])
 
     x = l_df['state'].unique()
@@ -419,3 +421,53 @@ def coverage_heatmap(sag_df, overall_state_df):
         figs.append(fig)
 
     return figs
+
+
+def facet_chart_bar(df, **kwargs):
+    df['dose1_fake_pct']=df['dose1_pct'] - df['dose2_pct']
+    # kwargs['y'] = ['dose2_pct', 'dose1_pct']
+    kwargs['y'] = ['dose2_pct', 'dose1_fake_pct']
+    fig=px.bar(df,
+                y='state',
+                x=kwargs['y'],
+                barmode='stack',
+                orientation='h',
+                text='dose1_pct',
+                labels={'value': kwargs['label_value'], 'variable': 'dose type', 'dose1_pct': 'dose1', 'ma7_vac_rate' : 'vac_rate'},
+                facet_col=kwargs['facet'],
+                facet_col_wrap=kwargs['facet_col_wrap'],
+                # range_x=[0,110],
+                category_orders={"state": config.states_rank},
+                color_discrete_sequence = px.colors.qualitative.Dark2
+                )
+
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="center", x=0.5),
+                      margin=dict(l=0,r=0, t=50, b=20),
+                      height=800)
+    fig.update_layout({'legend_title_text': ''})
+    fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    legendnames = {'dose1_pct': 'dose1', 'dose2_pct': 'dose2', 'dose1_fake_pct': 'dose1',
+                    'ma7_vac_rate' : 'dose1+dose2', 'ma7_dose1_vac_rate' : 'dose1',
+                    'ma7_dose2_vac_rate' : 'dose2'
+            }
+
+    fig.for_each_trace(lambda t: t.update(name = legendnames[t.name],
+                                  legendgroup = legendnames[t.name],
+                            )
+                    )
+
+    fig.update_traces(texttemplate='%{text:.2}%', textposition='outside')
+    fig.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
+    fig.for_each_xaxis(lambda xaxis: xaxis.update(showticklabels=True))
+
+    # fig['layout']['yaxis2'] = {'anchor': 'x2', 'domain': [0.0, 0.2866666666666666], 'matches': 'y', 'showticklabels': True}
+    # fig['layout']['yaxis3'] = {'anchor': 'x3', 'domain': [0.0, 0.2866666666666666], 'matches': 'y', 'showticklabels': True}
+    # fig['layout']['yaxis6'] = {'anchor': 'x6', 'domain': [0.35666666666666663, 0.6433333333333333], 'matches': 'y', 'showticklabels': True, 'annotations': {'x' : 4, 'y': 'ACT', 'text': 'tried' }}
+
+    for i in fig['data']:
+        if i['legendgroup'] == 'dose2':
+            i['text'] = []
+            i['texttemplate'] = []
+
+    return fig
+
