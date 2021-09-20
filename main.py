@@ -28,10 +28,19 @@ pd.options.mode.chained_assignment = None  # default='warn'
 np.set_printoptions(suppress=True)
 
 st.set_page_config(page_title='Welcome to the Great Australian COVID-19 Vaccine Race!', layout='wide')
+st.write('<style>div.row-widget.stRadio > div{flex-direction:row; border-style:double;}</style>', unsafe_allow_html=True)
+st.markdown(""" <style> #MainMenu {visibility: hidden;} footer {visibility: hidden;} </style> """, unsafe_allow_html=True)
+padding = 0.2
+st.markdown(f""" <style>
+    .reportview-container .main .block-container{{
+        padding-top: {padding}rem;
+        padding-right: {padding}rem;
+        padding-left: {padding}rem;
+        padding-bottom: {padding}rem;
+    }} </style> """, unsafe_allow_html=True)
 
 def main():
-    st.markdown('## It is a race!')
-    st.markdown('This page is optimised for wide screen. If you are viewing this on your phone, you might have better luck if you rotate it 90 degrees.')
+    st.markdown('### It is a race!')
 
     cached_df = data.get_data()
     df = cached_df.copy(deep = True)
@@ -183,8 +192,9 @@ def main():
     st.markdown('5. This page is hosted on a free server. Please excuse its sluggishness.')
     st.markdown('6. This page is always going to be under development.')
     st.markdown('7. If you find this page useful, feel free to share it.')
-    st.markdown('8. Feedback can be sent to [@ausvacrace](https://twitter.com/ausvacrace) on twitter.')
-    st.markdown('9. Get jabbed! Check out vaccine availability from [COVID19 Near Me](https://covid19nearme.com.au), or [covid queue](https://covidqueue.com), or [vaccine.wfltaylor.com](https://vaccine.wfltaylor.com)')
+    st.markdown('8. This page is optimised for wide screen. If you are viewing this on your phone, you might have better luck if you rotate it 90 degrees.')
+    st.markdown('9. Feedback can be sent to [@ausvacrace](https://twitter.com/ausvacrace) on twitter.')
+    st.markdown('10. Get jabbed! Check out vaccine availability from [COVID19 Near Me](https://covid19nearme.com.au), or [covid queue](https://covidqueue.com), or [vaccine.wfltaylor.com](https://vaccine.wfltaylor.com)')
 
 if __name__ == "__main__":
     main()
