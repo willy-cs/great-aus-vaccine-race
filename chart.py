@@ -363,6 +363,37 @@ def add_custom_age_groups(l_df, total_12plus_df):
 
     return l_df
 
+def heatmap_delta_data(overall_state_df):
+    a = compare.get_latest(overall_state_df)
+
+    a['delta_dose1pp']=round(a['delta_dose1']/a['abspop_jun2020'] * 100, 2)
+    a['delta_dose2pp']=round(a['delta_dose2']/a['abspop_jun2020'] * 100, 2)
+
+    y = ['delta_dose1pp', 'delta_dose2pp']
+    x = a['state'].unique()
+    z = []
+    for i in y:
+        row = np.ndarray.flatten(a.sort_values('state')[i].values)
+        z.append(row)
+
+    y = ['Dose 1', 'Dose 2']
+    fig = ff.create_annotated_heatmap(z,x=list(x),y=list(y), colorscale='pubu')
+    fig.update_yaxes(autorange='reversed')
+    fig.update_layout(
+        title=dict(font=dict(size=20),
+                    text='% coverage growth since yesterday',
+                    xanchor='center',
+                    yanchor='top',
+                    x=0.5,
+                    y=1,
+                ),
+        margin=dict(l=0, r=0, t=40, b=20),
+        height=130,
+    )
+    # No hover effect
+    fig.update_traces(hoverinfo='skip')
+    return fig
+
 
 def heatmap_data(sag_df, overall_state_df, col='dose1_pct'):
     states_df = compare.get_latest(overall_state_df)
