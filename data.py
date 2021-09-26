@@ -96,10 +96,9 @@ def get_national_data():
 
     # special cases for 5 year ranges
     attr_suffix=['FIRST_DOSE_PCT', 'SECOND_DOSE_PCT', 'FIRST_DOSE_COUNT', 'SECOND_DOSE_COUNT']
-    for i in range(20,95,5):
-        sub_df
+    for i in [16] + list(range(20,95,5)):
         lower=i
-        upper=i+4
+        upper=i+4 if i != 16 else 19
         ar=str(lower) + "-"+ str(upper)
         col='AIR_{}_{}_'.format(lower,upper)
         cols=['DATE_AS_AT'] + [col+s for s in attr_suffix]
@@ -208,7 +207,7 @@ def save_data(df):
     overall_state_df = overall_state_df.groupby('state').apply(lambda d: extra_calculation(d))
 
     # further preprocessing for overall_ag_df
-    overall_ag_df = overall_ag_df.groupby(['date', 'age_group'])[['dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].sum().reset_index()
+    overall_ag_df = overall_ag_df.query('state == "AUS"')
     overall_ag_df['dose1_pct'] = round(100 * overall_ag_df['dose1_cnt']/ overall_ag_df['abspop_jun2020'], 3)
     overall_ag_df['dose2_pct'] = round(100 * overall_ag_df['dose2_cnt']/ overall_ag_df['abspop_jun2020'], 3)
     overall_ag_df = overall_ag_df.groupby('age_group').apply(lambda d: extra_calculation(d))
@@ -219,9 +218,9 @@ def save_data(df):
     sag_df['dose2_pct'] = round(100 * sag_df['dose2_cnt']/ sag_df['abspop_jun2020'], 2)
     sag_df.sort_values(['date', 'state', 'age_group'], ascending=[True, True, True], inplace=True)
 
-    # overall_state_df.to_parquet('overall_state_df.parquet')
-    # overall_ag_df.to_parquet('overall_ag_df.parquet')
-    # sag_df.to_parquet('sag_df.parquet')
+    overall_state_df.to_csv('sample_overall_state_df-20210926.csv', index=False)
+    overall_ag_df.to_csv('sample_overall_ag_df-20210926.csv', index=False)
+    sag_df.to_csv('sample_sag_df-20210926.csv', index=False)
 
     return (overall_state_df, overall_ag_df, sag_df)
 
@@ -250,5 +249,5 @@ def find_age_group(df, age):
 
 if __name__ == '__main__':
     df = get_data()
-    df = age_grouping(df)
-    save_data(df)
+    df = age_grouping(df, True)
+    a,b,c = save_data(adf)
