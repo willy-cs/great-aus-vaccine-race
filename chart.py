@@ -1,5 +1,6 @@
 import plotly.express as px
 import plotly.figure_factory as ff
+from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
 from itertools import cycle
@@ -363,36 +364,67 @@ def add_custom_age_groups(l_df, total_12plus_df):
 
     return l_df
 
-def heatmap_delta_data(overall_state_df):
+def heatmap_delta_data_static(overall_state_df):
     a = compare.get_latest(overall_state_df)
 
     a['delta_dose1pp']=round(a['delta_dose1']/a['abspop_jun2020'] * 100, 2)
     a['delta_dose2pp']=round(a['delta_dose2']/a['abspop_jun2020'] * 100, 2)
+    a['delta_dose1pp_7d']=round(a['delta_dose1_7d']/a['abspop_jun2020'] * 100, 2)
+    a['delta_dose2pp_7d']=round(a['delta_dose2_7d']/a['abspop_jun2020'] * 100, 2)
+    a['delta_dose1pp_30d']=round(a['delta_dose1_30d']/a['abspop_jun2020'] * 100, 2)
+    a['delta_dose2pp_30d']=round(a['delta_dose2_30d']/a['abspop_jun2020'] * 100, 2)
 
-    y = ['delta_dose1pp', 'delta_dose2pp']
-    x = a['state'].unique()
-    z = []
-    for i in y:
-        row = np.ndarray.flatten(a.sort_values('state')[i].values)
-        z.append(row)
+    col_groups = [ ['delta_dose1pp', 'delta_dose2pp'],
+                    ['delta_dose1pp_7d', 'delta_dose2pp_7d'],
+                    ['delta_dose1pp_30d', 'delta_dose2pp_30d'] ]
 
-    y = ['Dose 1', 'Dose 2']
-    fig = ff.create_annotated_heatmap(z,x=list(x),y=list(y), colorscale='pubu')
-    fig.update_yaxes(autorange='reversed')
-    fig.update_layout(
-        title=dict(font=dict(size=20),
-                    text='% coverage growth since yesterday',
-                    xanchor='center',
-                    yanchor='top',
-                    x=0.5,
-                    y=1,
+    figs = []
+    for y in col_groups:
+        x = a['state'].unique()
+        z = []
+        for i in y:
+            row = np.ndarray.flatten(a.sort_values('state')[i].values)
+            z.append(row)
+
+        y = ['Dose 1 ', 'Dose 2 ']
+        fig = ff.create_annotated_heatmap(z,x=list(x),y=list(y), colorscale='pubu')
+
+        figs.append(fig)
+
+    subfig = make_subplots(rows=3, cols=1,
+                            subplot_titles=("since yesterday", "in the last week", "in the last 30 days"),
+                            vertical_spacing=0.1)
+    subfig.add_trace(figs[0].data[0],1,1)
+    subfig.add_trace(figs[1].data[0],2,1)
+    subfig.add_trace(figs[2].data[0],3,1)
+    annot0 = list(figs[0].layout.annotations)
+    annot1 = list(figs[1].layout.annotations)
+    annot2 = list(figs[2].layout.annotations)
+    for i in range(len(annot1)):
+        annot1[i]['xref'] = 'x2'
+        annot1[i]['yref'] = 'y2'
+    for i in range(len(annot2)):
+        annot2[i]['xref'] = 'x3'
+        annot2[i]['yref'] = 'y3'
+    subfig.update_layout(annotations=list(subfig['layout']['annotations'])+annot0+annot1+annot2)
+    subfig.update_layout(
+            title=dict(font=dict(size=20),
+                        text='% coverage growth of 16+ (eligible) population',
+                        xanchor='center',
+                        yanchor='top',
+                        x=0.5,
+                        y=1,
                 ),
-        margin=dict(l=0, r=0, t=40, b=20),
-        height=130,
-    )
-    # No hover effect
-    fig.update_traces(hoverinfo='skip')
-    return fig
+            margin=dict(l=0,r=0,t=40,b=20),
+            # height=390 #260
+            )
+    # place the xlabel at the top of the table
+    subfig.update_xaxes(side='top')
+    subfig.update_yaxes(autorange='reversed')
+    subfig['layout']['yaxis']['domain'] = [0.7333,0.9333]
+    subfig['layout']['yaxis2']['domain'] = [0.3667,0.5667]
+    subfig['layout']['yaxis3']['domain'] = [0,0.2]
+    return subfig
 
 
 def heatmap_data(sag_df, overall_state_df, col='dose1_pct'):

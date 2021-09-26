@@ -11,7 +11,6 @@ import data
 import chart
 import config
 
-import matplotlib.pyplot as plt
 import plotly.express as px
 
 from IPython.core.interactiveshell import InteractiveShell
@@ -30,13 +29,13 @@ np.set_printoptions(suppress=True)
 st.set_page_config(page_title='Welcome to the Great Australian COVID-19 Vaccine Race!', layout='wide')
 st.write('<style>div.row-widget.stRadio > div{flex-direction:row; border-style:double;}</style>', unsafe_allow_html=True)
 st.markdown(""" <style> #MainMenu {visibility: hidden;} footer {visibility: hidden;} </style> """, unsafe_allow_html=True)
-padding = 0.2
+padding = 0.3
 st.markdown(f""" <style>
     .reportview-container .main .block-container{{
-        padding-top: {padding}rem;
-        padding-right: {padding}rem;
-        padding-left: {padding}rem;
-        padding-bottom: {padding}rem;
+        padding-top: 0.1rem;
+        padding-right: 2rem;
+        padding-left: 0.8rem;
+        padding-bottom: 0.2rem;
     }} </style> """, unsafe_allow_html=True)
 
 def main():
@@ -127,7 +126,7 @@ def main():
     ############ HEATMAP CHARTS ##################
     st.markdown('### *Vaccination status using reports published on {}*'.format(latest_date))
     fig1, fig2 = chart.coverage_heatmap(sag_df, overall_state_df)
-    fig3 = chart.heatmap_delta_data(overall_state_df)
+    fig3 = chart.heatmap_delta_data_static(overall_state_df)
     for (col, fig) in zip(st.columns(3), [fig1, fig2, fig3]):
         with col:
             st.plotly_chart(fig, use_container_width=True,\

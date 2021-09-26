@@ -156,6 +156,10 @@ def extra_calculation(a):
     a.sort_values('date', ascending = True, inplace=True)
     a['delta_dose1'] = a['dose1_cnt'].diff()
     a['delta_dose2'] = a['dose2_cnt'].diff()
+    a['delta_dose1_7d'] = a['dose1_cnt'].diff(7)
+    a['delta_dose2_7d'] = a['dose2_cnt'].diff(7)
+    a['delta_dose1_30d'] = a['dose1_cnt'].diff(30)
+    a['delta_dose2_30d'] = a['dose2_cnt'].diff(30)
     a['delta_dose12'] = a['delta_dose1'] + a['delta_dose2']
     a['vac_rate'] = round(a['delta_dose12'] / a['abspop_jun2020'] * 100, 2)
     a['vac_rate'] = a['vac_rate'].clip(0)
