@@ -9,9 +9,9 @@ states_rank = ['AUS', 'NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT']
 states_rank_heatmap = ['AUS', 'ACT', 'NSW', 'VIC', 'TAS', 'SA', 'NT', 'QLD', 'WA']
 
 # col_name, col_label, col_title
-vac_rate_info = [['ma7_dose1_vac_rate', 'MA-7 vac rate', 'Dose 1 vac rate (16+)'],
-                ['ma7_dose2_vac_rate', 'MA-7 vac rate', 'Dose 2 vac rate (16+)'],
-                ['ma7_vac_rate', 'MA-7 vac rate', 'Dose 1 + Dose 2 vac rate (16+)']]
+vac_rate_info = [['ma7_dose1_vac_rate', 'MA-7 vac rate', 'Dose 1 vac rate'],
+                ['ma7_dose2_vac_rate', 'MA-7 vac rate', 'Dose 2 vac rate'],
+                ['ma7_vac_rate', 'MA-7 vac rate', 'Dose 1 + Dose 2 vac rate']]
 
 vac_status_info = [['dose1_pct', 'coverage (%)', 'Dose 1 coverage'],
                     ['dose2_pct', 'coverage (%)', 'Dose 2 coverage']]
