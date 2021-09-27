@@ -71,10 +71,10 @@ def main():
             px_settings['range_y'] = None
 
     with col2:
-        opt_ag=st.radio('of people aged', ['all people'] + list_age_group)
+        opt_ag=st.radio('of people aged', ['16+ (eligible)'] + ['12+'] + list_age_group)
 
     with col3:
-        if opt_ag != "all people":
+        if opt_ag != "16+ (eligible)" and opt_ag != '12+':
             opt_aj=st.radio('in ', ['AUS'])
         else:
             opt_aj=st.radio('in ', list_states)
@@ -83,16 +83,19 @@ def main():
         group_options=config.grouping_options
         if opt_aj != "AUS":
             group_options=config.age_group_only
-        elif opt_ag != "all people":
+        elif opt_ag != "16+ (eligible)" and opt_ag != '12+':
             group_options=['Jurisdictions']
 
         opt_as=st.radio('across', group_options)
 
         if opt_as == "Jurisdictions":
-            plotly_df = overall_state_df
+            if opt_ag == "16+ (eligible)":
+                plotly_df = overall_state_df.query('age_group == "16_or_above"')
+            elif opt_ag == "12+":
+                plotly_df = overall_state_df.query('age_group == "12_or_above"')
             px_settings['facet'] = px_settings['color'] = 'state'
             px_settings['facet_col_wrap'] = 9
-            if opt_ag != 'all people':
+            if opt_ag != '16+ (eligible)' and opt_ag != '12+':
                 plotly_df = sag_df.query('age_group == @opt_ag')
         elif opt_as == "Age Groups":
             plotly_df = overall_ag_df
@@ -129,8 +132,9 @@ def main():
 
     ############ HEATMAP CHARTS ##################
     st.markdown('### *Vaccination coverage using reports published on {}*'.format(latest_date))
+    heatmap_df = overall_state_df.query('age_group == "16_or_above"')
     fig1, fig2 = chart.coverage_heatmap(sag_df, overall_state_df)
-    fig3 = chart.heatmap_delta_data_static(overall_state_df)
+    fig3 = chart.heatmap_delta_data_static(heatmap_df)
     for (col, fig) in zip(st.columns(3), [fig1, fig2, fig3]):
         with col:
             st.plotly_chart(fig, use_container_width=True,\
@@ -159,9 +163,11 @@ def main():
     # Dummy user
     user=compare.User()
     col1, col2 = st.columns(2)
+    # if you want to be cheeky and link this to the radio button, you can just use eta_src = plotly_df
+    eta_src = overall_state_df.query('age_group == "16_or_above"')
     with col1:
-        st.markdown("### *Projected date to hit 70% and 80% first dose*")
-        eta_df = compare.construct_eta_data(overall_state_df, 'state', user, dose='dose1')
+        st.markdown("### *Projected date to hit 70% and 80% first dose for 16+ population*")
+        eta_df = compare.construct_eta_data(eta_src, 'state', user, dose='dose1')
         st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
                                         user=user,
                                         hl=False,
@@ -170,9 +176,8 @@ def main():
                                         config={'displayModeBar':False, 'staticPlot':True})
 
     with col2:
-        st.markdown("### *Projected date to hit 70% and 80% fully vaccinated target*")
-        pass
-        eta_df = compare.construct_eta_data(overall_state_df, 'state', user)
+        st.markdown("### *Projected date to hit 70% and 80% double dose for 16+ population*")
+        eta_df = compare.construct_eta_data(eta_src, 'state', user)
         st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
                                         user=user,
                                         hl=False,

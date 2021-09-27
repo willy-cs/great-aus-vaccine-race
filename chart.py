@@ -379,13 +379,6 @@ def vac_status(df, people, jur, stats):
     return fig
 
 def add_custom_age_groups(l_df, total_12plus_df):
-
-    # for twelve or above
-    total_12plus_df['dose1_pct'] = round(total_12plus_df['dose1_cnt']/total_12plus_df['abspop_jun2020'] * 100, 2)
-    total_12plus_df['dose2_pct'] = round(total_12plus_df['dose2_cnt']/total_12plus_df['abspop_jun2020'] * 100, 2)
-    total_12plus_df['age_group'] = 'tot 12+'
-    l_df=pd.concat([l_df, total_12plus_df[['state', 'age_group', 'dose1_pct', 'dose2_pct']]])
-
     # for total population
     total_population_df=total_12plus_df.copy(deep=True)
     total_population_df.drop(columns=['abspop_jun2020'], inplace=True) # reset the population
@@ -534,20 +527,23 @@ def heatmap_delta_data_dynamic(df, opt_ag, opt_aj, opt_as):
     return subfig
 
 def heatmap_data(sag_df, overall_state_df, col='dose1_pct'):
-    states_df = compare.get_latest(overall_state_df)
+    sixteen_plus_df = overall_state_df.query('age_group == "16_or_above"')
+    twelve_plus_df = overall_state_df.query('age_group == "12_or_above"')
 
+    states_df = compare.get_latest(sixteen_plus_df)
     l_df = compare.get_latest(sag_df)
 
-    # This is for each age group coverage, all good here
+    # This is for each age group coverage, for 16+
     l_df = pd.concat([states_df, l_df])[['state', 'age_group', 'dose1_pct', 'dose2_pct']]
     l_df['age_group'] = np.where(l_df['age_group'] == '16_or_above', 'tot 16+' ,l_df['age_group'])
     l_df[col] = np.where(l_df[col] >= 94.99, 95, l_df[col])
 
+    # Adding the 12+ population
+    l_df = pd.concat([compare.get_latest(twelve_plus_df), l_df])[['state', 'age_group', 'dose1_pct', 'dose2_pct']]
+    l_df['age_group'] = np.where(l_df['age_group'] == '12_or_above', 'tot 12+' ,l_df['age_group'])
 
-    # We need to sum up vaccines for 12-15 and 16_or_above
-    extra_doses_1215_df=compare.get_latest(sag_df).query('age_group == "12-15"')[['state', 'age_group','dose1_cnt', 'dose2_cnt', 'abspop_jun2020']]
-    total_12plus_df=pd.concat([states_df, extra_doses_1215_df])[['state', 'age_group', 'dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].groupby('state')[['dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].sum().reset_index()
-    l_df = add_custom_age_groups(l_df, total_12plus_df)
+    # adding the total population, using the dose counts from 12+ population
+    l_df = add_custom_age_groups(l_df, compare.get_latest(twelve_plus_df))
     l_df = l_df.sort_values(['state', 'age_group'])
 
     l_df['state'] = pd.Categorical(l_df['state'], config.states_rank_heatmap)

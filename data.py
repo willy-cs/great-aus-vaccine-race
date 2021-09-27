@@ -52,7 +52,8 @@ def get_data():
     df.columns = df.columns.str.lower()
     df['date'] = pd.to_datetime(df['date'])
     aus_df=get_national_data()
-    df=pd.concat([df,aus_df], ignore_index=True)
+    twelveplus_df=create_12plus_data(df, aus_df)
+    df=pd.concat([df,aus_df,twelveplus_df], ignore_index=True)
     df['state'] = pd.Categorical(df['state'], config.states_rank)
     df['dose1_cnt'] = df['dose1_cnt'].astype(int)
     df['dose2_cnt'] = df['dose2_cnt'].astype(int)
@@ -62,6 +63,25 @@ def get_data():
     df=df.query('date > "27-07-2021"')
 
     return df
+
+def create_12plus_data(df, aus_df):
+    ### data from gov separates between 12-15 and 16+
+    ### We want to merge them here
+    ### Generate 12_or_above age group
+    new_df = pd.DataFrame()
+    for x in [df, aus_df]:
+        new_12plus_df = x.query('(age_lower == 12 & age_upper == 15) | (age_lower == 16 & age_upper == 999)').groupby(['date', 'state'])[['dose1_cnt', 'dose2_cnt', 'abspop_jun2020']].sum().reset_index()
+        new_12plus_df['age_lower'] = 12
+        new_12plus_df['age_upper'] = 999
+        # so for older dates, the population for 12-15 would be empty, as we don't have the data for it
+        #   and as we aggregate by summing them, then the population will only consist of 16+
+        # we're just going to overwrite those population with the 'max', which will sum up 12-15 and 16+
+        new_12plus_df['abspop_jun2020']=new_12plus_df.groupby('state')['abspop_jun2020'].transform('max')
+        new_12plus_df['dose1_pct'] = round(new_12plus_df['dose1_cnt'] / new_12plus_df['abspop_jun2020'] * 100, 2)
+        new_12plus_df['dose2_pct'] = round(new_12plus_df['dose2_cnt'] / new_12plus_df['abspop_jun2020'] * 100, 2)
+        new_df = pd.concat([new_df, new_12plus_df])
+
+    return new_df
 
 def get_national_data():
     data_url = "https://vaccinedata.covid19nearme.com.au/data/air.csv"
@@ -122,6 +142,8 @@ def age_grouping(df, age_group_10_flag):
 
     m = df['age_group'] != "0-999"
     df['age_group'].where(m, "0_or_above", inplace = True)
+    m = df['age_group'] != "12-999"
+    df['age_group'].where(m, "12_or_above", inplace = True)
     m = df['age_group'] != "16-999"
     df['age_group'].where(m, "16_or_above", inplace = True)
     m = df['age_group'] != "50-999"
@@ -203,8 +225,8 @@ def save_data(df):
     # further preprocessing for overall_state_df
     overall_state_df['dose1_pct'] = round(100 * overall_state_df['dose1_cnt']/ overall_state_df['abspop_jun2020'], 2)
     overall_state_df['dose2_pct'] = round(100 * overall_state_df['dose2_cnt']/ overall_state_df['abspop_jun2020'], 2)
-    overall_state_df = overall_state_df.query('age_group == "16_or_above"')
-    overall_state_df = overall_state_df.groupby('state').apply(lambda d: extra_calculation(d))
+    overall_state_df = overall_state_df.query('age_group == "16_or_above" | age_group == "12_or_above"')
+    overall_state_df = overall_state_df.groupby(['age_group', 'state']).apply(lambda d: extra_calculation(d))
 
     # further preprocessing for overall_ag_df
     overall_ag_df = overall_ag_df.query('state == "AUS"')
@@ -249,5 +271,6 @@ def find_age_group(df, age):
 
 if __name__ == '__main__':
     df = get_data()
-    df = age_grouping(df, True)
+    aus_df=get_national_data()
+    adf = age_grouping(df, True)
     a,b,c = save_data(adf)
