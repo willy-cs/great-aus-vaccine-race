@@ -116,8 +116,8 @@ def main():
                 fig=chart.line_chart(plotly_df, **px_settings)
                 figs.append(fig)
             # if opt_aa == "Vaccination Coverage":
-                # fig3 = chart.heatmap_delta_data_dynamic(plotly_df, opt_ag, opt_aj, opt_as)
-                # figs.append(fig3)
+            #     fig3 = chart.heatmap_delta_data_dynamic(plotly_df, opt_ag, opt_aj, opt_as)
+            #     figs.append(fig3)
 
     if len(figs) > 1:
         for col, fig in zip(st.columns(len(figs)), figs):

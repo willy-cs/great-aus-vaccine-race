@@ -6,6 +6,7 @@ hover_template={'Cumulative percentage': '%{y}%',
                 'Cumulative number': '%{y}'}
 
 states_rank = ['AUS', 'NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT']
+states_rank_heatmap = ['AUS', 'ACT', 'NSW', 'VIC', 'TAS', 'SA', 'NT', 'QLD', 'WA']
 
 # col_name, col_label, col_title
 vac_rate_info = [['ma7_dose1_vac_rate', 'MA-7 vac rate', 'Dose 1 vac rate (16+)'],

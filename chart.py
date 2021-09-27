@@ -7,6 +7,7 @@ from itertools import cycle
 import config
 import compare
 import datetime
+import math
 
 VAC_STATUS_PP = ['unvac_pct', 'dose1_pct', 'dose2_pct']
 HL_FADE_COLOUR = 'lightgrey'
@@ -202,7 +203,7 @@ def line_chart(df, **kwargs):
     ann=[]
     latest_df = compare.get_latest(df)
     grouping=kwargs['color']
-    for i in latest_df[kwargs['color']].unique():
+    for i in latest_df[grouping].unique():
         ann.append(
                 {'x': df['date'].max() + datetime.timedelta(days=2),
                 'y': latest_df[latest_df[grouping] == i][kwargs['y']].max(),
@@ -238,6 +239,7 @@ def line_chart(df, **kwargs):
 
     if kwargs['y_label'] == "coverage (%)":
         add_target_hline(fig)
+    # add_annot_vrect(fig, latest_df[[grouping, kwargs['y']]])
     # newnames=dict(latest_df[[kwargs['color'], kwargs['y']]].to_records(index=False))
     # fig.for_each_trace(lambda t: t.update(name = t.name + "(" + str(round(newnames[t.name], 1)) + ")"))
 
@@ -250,6 +252,25 @@ def add_target_hline(fig):
     fig.add_hline(y=80, line_dash="dot",
               annotation_text="80%",
               annotation_position="bottom left")
+
+    return
+
+def add_annot_vrect(fig, df):
+    list_annot = ["{}: {}".format(g, v) for (g, v) in list(df.to_records(index=False)) ]
+    annot_str = '<br>'.join(list_annot[:math.ceil(len(list_annot)/2)])
+    annot_str2 = '<br>'.join(list_annot[math.ceil(len(list_annot)/2):])
+    fig.add_vrect(x0='2021-08-29', x1='2021-09-26',
+                    annotation_text=annot_str,
+                    annotation_position="bottom left",
+                    # fillcolor="green",
+                    # opacity=0.25,
+                    line_width=0)
+    fig.add_vrect(x0='2021-09-12', x1='2021-09-26',
+                    annotation_text=annot_str2,
+                    annotation_position="bottom left",
+                    # fillcolor="green",
+                    # opacity=0.25,
+                    line_width=0)
 
 
 def facet_chart(df, **kwargs):
@@ -373,8 +394,12 @@ def add_custom_age_groups(l_df, total_12plus_df):
     total_population_df['dose1_pct'] = round(total_population_df['dose1_cnt']/total_population_df['abspop_jun2020'] * 100, 2)
     total_population_df['dose2_pct'] = round(total_population_df['dose2_cnt']/total_population_df['abspop_jun2020'] * 100, 2)
     total_population_df['age_group'] = 'tot pop'
+    # hack to create empty row in heatmap table
     l_df=pd.concat([l_df, total_population_df[['state', 'age_group', 'dose1_pct', 'dose2_pct']]])
-
+    total_population_df['age_group']='empty row'
+    total_population_df['dose1_pct']=0
+    total_population_df['dose2_pct']=0
+    l_df=pd.concat([l_df, total_population_df[['state', 'age_group', 'dose1_pct', 'dose2_pct']]], ignore_index=True)
 
     return l_df
 
@@ -394,7 +419,9 @@ def heatmap_delta_data_static(overall_state_df):
 
     figs = []
     for y in col_groups:
-        x = a['state'].unique()
+        a['state'] = pd.Categorical(a['state'], config.states_rank_heatmap)
+        x = config.states_rank_heatmap
+        # x = a['state'].unique()
         z = []
         for i in y:
             row = np.ndarray.flatten(a.sort_values('state')[i].values)
@@ -423,7 +450,7 @@ def heatmap_delta_data_static(overall_state_df):
     subfig.update_layout(annotations=list(subfig['layout']['annotations'])+annot0+annot1+annot2)
     subfig.update_layout(
             title=dict(font=dict(size=18),
-                        text='% coverage growth of 16+ (eligible) population',
+                        text='% coverage growth of 16+ population',
                         xanchor='center',
                         yanchor='top',
                         x=0.5,
@@ -487,9 +514,8 @@ def heatmap_delta_data_dynamic(df, opt_ag, opt_aj, opt_as):
     subfig.update_layout(annotations=list(subfig['layout']['annotations'])+annot0+annot1+annot2)
     subfig.update_layout(
             title=dict(font=dict(size=18),
-                        text='% coverage growth of {} in {} across {}'.format(opt_ag,
-                                                                                opt_aj,
-                                                                                opt_as.lower()),
+                        text='% coverage growth of {} in {}'.format(opt_ag,
+                                                                    opt_aj),
                         xanchor='center',
                         yanchor='top',
                         x=0.5,
@@ -523,7 +549,8 @@ def heatmap_data(sag_df, overall_state_df, col='dose1_pct'):
     l_df = add_custom_age_groups(l_df, total_12plus_df)
     l_df = l_df.sort_values(['state', 'age_group'])
 
-    x = l_df['state'].unique()
+    l_df['state'] = pd.Categorical(l_df['state'], config.states_rank_heatmap)
+    x = config.states_rank_heatmap
     y = l_df['age_group'].unique()
     #z = [[state1, age_group1, state1_agegroup2...
     #     [state2]
@@ -546,6 +573,12 @@ def coverage_heatmap(sag_df, overall_state_df):
         x, y, z = heatmap_data(sag_df, overall_state_df, col=c)
         # can try earth, or blues for colorscale
         fig = ff.create_annotated_heatmap(z,x=list(x),y=list(y), colorscale='pubu', zmin=0, zmax=100)
+        # Hack of creating an illusion of an empty row between age groups and total populations
+        for i in fig.layout.annotations:
+            if i['y'] == "empty row":
+                i['text'] = ''
+        fig.data[0]['y'] = np.where(np.array(fig.data[0]['y']) == 'empty row', '', fig.data[0]['y'])
+        ####
         fig.update_yaxes(autorange='reversed')
         fig.update_layout(
             title=dict(font=dict(size=18),
@@ -563,7 +596,6 @@ def coverage_heatmap(sag_df, overall_state_df):
         figs.append(fig)
 
     return figs
-
 
 def facet_chart_bar(df, **kwargs):
     df['dose1_fake_pct']=df['dose1_pct'] - df['dose2_pct']
