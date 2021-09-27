@@ -44,6 +44,7 @@ def main():
     cached_df = data.get_data()
     df = cached_df.copy(deep = True)
     age_group_10_flag = True
+    # age_group_10_flag = False
     df = data.age_grouping(df, age_group_10_flag)
     (overall_state_df, overall_ag_df, sag_df) = data.save_data(df)
     list_states = config.states_rank
@@ -66,7 +67,7 @@ def main():
 
         px_settings['y'] = [i[0] for i in config.analysis_options[opt_aa]]
         px_settings['label_value'] = config.analysis_options[opt_aa][0][1]
-        if opt_aa == "Vaccination Status":
+        if opt_aa == "Vaccination Coverage":
             px_settings['range_y'] = None
 
     with col2:
@@ -114,6 +115,9 @@ def main():
                 (px_settings['y'], px_settings['y_label'], px_settings['graph_title']) = px_info
                 fig=chart.line_chart(plotly_df, **px_settings)
                 figs.append(fig)
+            # if opt_aa == "Vaccination Coverage":
+                # fig3 = chart.heatmap_delta_data_dynamic(plotly_df, opt_ag, opt_aj, opt_as)
+                # figs.append(fig3)
 
     if len(figs) > 1:
         for col, fig in zip(st.columns(len(figs)), figs):
@@ -124,7 +128,7 @@ def main():
     ############ MAIN CHARTS ####################
 
     ############ HEATMAP CHARTS ##################
-    st.markdown('### *Vaccination status using reports published on {}*'.format(latest_date))
+    st.markdown('### *Vaccination coverage using reports published on {}*'.format(latest_date))
     fig1, fig2 = chart.coverage_heatmap(sag_df, overall_state_df)
     fig3 = chart.heatmap_delta_data_static(overall_state_df)
     for (col, fig) in zip(st.columns(3), [fig1, fig2, fig3]):
@@ -156,7 +160,7 @@ def main():
     user=compare.User()
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("### *Prediction date to hit 70% and 80% first dose*")
+        st.markdown("### *Projected date to hit 70% and 80% first dose*")
         eta_df = compare.construct_eta_data(overall_state_df, 'state', user, dose='dose1')
         st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
                                         user=user,
@@ -166,7 +170,7 @@ def main():
                                         config={'displayModeBar':False, 'staticPlot':True})
 
     with col2:
-        st.markdown("### *Prediction date to hit 70% and 80% fully vaccinated target*")
+        st.markdown("### *Projected date to hit 70% and 80% fully vaccinated target*")
         pass
         eta_df = compare.construct_eta_data(overall_state_df, 'state', user)
         st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
@@ -180,7 +184,7 @@ def main():
 
 
     st.subheader('Notes')
-    st.markdown('1. Prediction on reaching 70 or 80% fully vaccinated status is based on 7-day moving average rate. This will be updated daily.')
+    st.markdown('1. Projection on reaching 70 or 80% target is based on 7-day moving average rate of each dose. This will be updated daily.')
     st.markdown('2. My source data is from https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf, extracted from [WA Health](https://www.wa.gov.au/sites/default/files/2021-06/COVID-19-Vaccination-Dashboard-Guide-for-Interpretation.pdf) (second dose by state data prior to 1st July 2021) and [Department of Health](https://www.health.gov.au/using-our-websites/copyright) (all other data) by [Ken Tsang](https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf). I might have modified the data to correct any mistakes or errors I perceive or notice.')
     st.markdown('3. This page does not aim or claim to be authoritative of vaccine data roll out. I do not guarantee its accuracy. Use at your own risk, and I take no responsibility of any loss that might have occurred.')
     st.markdown('4. I built this page for my own purpose. Sorry if it does not meet your expectations.')

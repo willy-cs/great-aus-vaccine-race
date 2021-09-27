@@ -212,9 +212,9 @@ def line_chart(df, **kwargs):
         )
     # ann.append({'x': df['date'].min()+datetime.timedelta(days=7),
     #                 'y':1, 'yanchor':'top', 'yref':'paper',
-    #                 'text': 'vaccine.willy-is.me', 'showarrow': False})
+    #                 'text': 'watermark text', 'showarrow': False})
     fig.update_layout(
-            title=dict(font=dict(size=20),
+            title=dict(font=dict(size=18),
                         text=kwargs['graph_title'],
                         xanchor='center',
                         yanchor='top',
@@ -236,8 +236,20 @@ def line_chart(df, **kwargs):
         hovertemplate='%{y}'
     )
 
+    if kwargs['y_label'] == "coverage (%)":
+        add_target_hline(fig)
+    # newnames=dict(latest_df[[kwargs['color'], kwargs['y']]].to_records(index=False))
+    # fig.for_each_trace(lambda t: t.update(name = t.name + "(" + str(round(newnames[t.name], 1)) + ")"))
 
     return fig
+
+def add_target_hline(fig):
+    fig.add_hline(y=70, line_dash="dot",
+              annotation_text="70%",
+              annotation_position="bottom left")
+    fig.add_hline(y=80, line_dash="dot",
+              annotation_text="80%",
+              annotation_position="bottom left")
 
 
 def facet_chart(df, **kwargs):
@@ -278,6 +290,8 @@ def facet_chart(df, **kwargs):
             xaxis=dict(fixedrange=True),
             yaxis=dict(fixedrange=True),
         )
+
+    add_target_hline(fig)
 
     return fig
 
@@ -369,10 +383,10 @@ def heatmap_delta_data_static(overall_state_df):
 
     a['delta_dose1pp']=round(a['delta_dose1']/a['abspop_jun2020'] * 100, 2)
     a['delta_dose2pp']=round(a['delta_dose2']/a['abspop_jun2020'] * 100, 2)
-    a['delta_dose1pp_7d']=round(a['delta_dose1_7d']/a['abspop_jun2020'] * 100, 2)
-    a['delta_dose2pp_7d']=round(a['delta_dose2_7d']/a['abspop_jun2020'] * 100, 2)
-    a['delta_dose1pp_30d']=round(a['delta_dose1_30d']/a['abspop_jun2020'] * 100, 2)
-    a['delta_dose2pp_30d']=round(a['delta_dose2_30d']/a['abspop_jun2020'] * 100, 2)
+    a['delta_dose1pp_7d']=round(a['delta_dose1_7d']/a['abspop_jun2020'] * 100, 1)
+    a['delta_dose2pp_7d']=round(a['delta_dose2_7d']/a['abspop_jun2020'] * 100, 1)
+    a['delta_dose1pp_30d']=round(a['delta_dose1_30d']/a['abspop_jun2020'] * 100, 1)
+    a['delta_dose2pp_30d']=round(a['delta_dose2_30d']/a['abspop_jun2020'] * 100, 1)
 
     col_groups = [ ['delta_dose1pp', 'delta_dose2pp'],
                     ['delta_dose1pp_7d', 'delta_dose2pp_7d'],
@@ -408,7 +422,7 @@ def heatmap_delta_data_static(overall_state_df):
         annot2[i]['yref'] = 'y3'
     subfig.update_layout(annotations=list(subfig['layout']['annotations'])+annot0+annot1+annot2)
     subfig.update_layout(
-            title=dict(font=dict(size=20),
+            title=dict(font=dict(size=18),
                         text='% coverage growth of 16+ (eligible) population',
                         xanchor='center',
                         yanchor='top',
@@ -426,6 +440,71 @@ def heatmap_delta_data_static(overall_state_df):
     subfig['layout']['yaxis3']['domain'] = [0,0.2]
     return subfig
 
+def heatmap_delta_data_dynamic(df, opt_ag, opt_aj, opt_as):
+    a = compare.get_latest(df)
+
+    a['delta_dose1pp']=round(a['delta_dose1']/a['abspop_jun2020'] * 100, 2)
+    a['delta_dose2pp']=round(a['delta_dose2']/a['abspop_jun2020'] * 100, 2)
+    a['delta_dose1pp_7d']=round(a['delta_dose1_7d']/a['abspop_jun2020'] * 100, 1)
+    a['delta_dose2pp_7d']=round(a['delta_dose2_7d']/a['abspop_jun2020'] * 100, 1)
+    a['delta_dose1pp_30d']=round(a['delta_dose1_30d']/a['abspop_jun2020'] * 100, 1)
+    a['delta_dose2pp_30d']=round(a['delta_dose2_30d']/a['abspop_jun2020'] * 100, 1)
+
+    col_groups = [ ['delta_dose1pp', 'delta_dose2pp'],
+                    ['delta_dose1pp_7d', 'delta_dose2pp_7d'],
+                    ['delta_dose1pp_30d', 'delta_dose2pp_30d'] ]
+
+    xaxis = 'state' if opt_as == 'Jurisdictions' else 'age_group'
+
+    figs = []
+    for y in col_groups:
+        x = a[xaxis].unique()
+        z = []
+        for i in y:
+            row = np.ndarray.flatten(a.sort_values(xaxis)[i].values)
+            z.append(row)
+
+        y = ['Dose 1 ', 'Dose 2 ']
+        fig = ff.create_annotated_heatmap(z,x=list(x),y=list(y), colorscale='pubu')
+
+        figs.append(fig)
+
+    subfig = make_subplots(rows=3, cols=1,
+                            subplot_titles=("since yesterday", "in the last week", "in the last 30 days"),
+                            vertical_spacing=0.1)
+    subfig.add_trace(figs[0].data[0],1,1)
+    subfig.add_trace(figs[1].data[0],2,1)
+    subfig.add_trace(figs[2].data[0],3,1)
+    annot0 = list(figs[0].layout.annotations)
+    annot1 = list(figs[1].layout.annotations)
+    annot2 = list(figs[2].layout.annotations)
+    for i in range(len(annot1)):
+        annot1[i]['xref'] = 'x2'
+        annot1[i]['yref'] = 'y2'
+    for i in range(len(annot2)):
+        annot2[i]['xref'] = 'x3'
+        annot2[i]['yref'] = 'y3'
+    subfig.update_layout(annotations=list(subfig['layout']['annotations'])+annot0+annot1+annot2)
+    subfig.update_layout(
+            title=dict(font=dict(size=18),
+                        text='% coverage growth of {} in {} across {}'.format(opt_ag,
+                                                                                opt_aj,
+                                                                                opt_as.lower()),
+                        xanchor='center',
+                        yanchor='top',
+                        x=0.5,
+                        y=1,
+                ),
+            margin=dict(l=0,r=0,t=40,b=20),
+            # height=390 #260
+            )
+    # place the xlabel at the top of the table
+    subfig.update_xaxes(side='top')
+    subfig.update_yaxes(autorange='reversed')
+    subfig['layout']['yaxis']['domain'] = [0.7333,0.9333]
+    subfig['layout']['yaxis2']['domain'] = [0.3667,0.5667]
+    subfig['layout']['yaxis3']['domain'] = [0,0.2]
+    return subfig
 
 def heatmap_data(sag_df, overall_state_df, col='dose1_pct'):
     states_df = compare.get_latest(overall_state_df)
@@ -469,7 +548,7 @@ def coverage_heatmap(sag_df, overall_state_df):
         fig = ff.create_annotated_heatmap(z,x=list(x),y=list(y), colorscale='pubu', zmin=0, zmax=100)
         fig.update_yaxes(autorange='reversed')
         fig.update_layout(
-            title=dict(font=dict(size=20),
+            title=dict(font=dict(size=18),
                         text=title,
                         xanchor='center',
                         yanchor='top',

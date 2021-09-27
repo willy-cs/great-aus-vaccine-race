@@ -16,7 +16,7 @@ vac_status_info = [['dose1_pct', 'coverage (%)', 'Dose 1 coverage'],
                     ['dose2_pct', 'coverage (%)', 'Dose 2 coverage']]
 
 analysis_options={'Vaccination Rate' : vac_rate_info,
-                   'Vaccination Status' : vac_status_info,
+                   'Vaccination Coverage' : vac_status_info,
                     }
 
 
