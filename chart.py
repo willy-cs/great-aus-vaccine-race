@@ -312,7 +312,8 @@ def facet_chart(df, **kwargs):
             yaxis=dict(fixedrange=True),
         )
 
-    add_target_hline(fig)
+    if kwargs['label_value'] == "coverage (%)":
+        add_target_hline(fig)
 
     return fig
 
