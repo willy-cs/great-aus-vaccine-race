@@ -27,8 +27,8 @@ pd.options.mode.chained_assignment = None  # default='warn'
 np.set_printoptions(suppress=True)
 
 st.set_page_config(page_title='Welcome to the Great Australian COVID-19 Vaccine Race!', layout='wide')
-st.write('<style>div.row-widget.stRadio > div{flex-direction:row; border-style:double;}</style>', unsafe_allow_html=True)
-st.markdown(""" <style> #MainMenu {visibility: hidden;} footer {visibility: hidden;} </style> """, unsafe_allow_html=True)
+st.write('<style>div.row-widget.stRadio > div{flex-direction:row; border-style:double} #MainMenu {visibility: hidden;} footer {visibility: hidden;} </style>', unsafe_allow_html=True)
+st.write('<style>div.row-widget.stRadio > div > label > div {padding-left: 0px} </style>', unsafe_allow_html=True)
 padding = 0.3
 st.markdown(f""" <style>
     .reportview-container .main .block-container{{
@@ -36,7 +36,8 @@ st.markdown(f""" <style>
         padding-right: 2rem;
         padding-left: 0.8rem;
         padding-bottom: 0.2rem;
-    }} </style> """, unsafe_allow_html=True)
+    }}
+    </style> """, unsafe_allow_html=True)
 
 def main():
     st.markdown('#### It is a race!')
