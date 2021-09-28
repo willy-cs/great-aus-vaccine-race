@@ -28,7 +28,7 @@ np.set_printoptions(suppress=True)
 
 st.set_page_config(page_title='Welcome to the Great Australian COVID-19 Vaccine Race!', layout='wide')
 st.write('<style>div.row-widget.stRadio > div{flex-direction:row; border-style:double} #MainMenu {visibility: hidden;} footer {visibility: hidden;} </style>', unsafe_allow_html=True)
-st.write('<style>div.row-widget.stRadio > div > label > div {padding-left: 0px} </style>', unsafe_allow_html=True)
+st.write('<style>div.row-widget.stRadio > div > label > div {padding-left: 0px; padding-right:5px} </style>', unsafe_allow_html=True)
 padding = 0.3
 st.markdown(f""" <style>
     .reportview-container .main .block-container{{
