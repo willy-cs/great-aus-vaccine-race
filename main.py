@@ -39,7 +39,7 @@ st.markdown(f""" <style>
     }} </style> """, unsafe_allow_html=True)
 
 def main():
-    st.markdown('### It is a race!')
+    st.markdown('#### It is a race!')
 
     cached_df = data.get_data()
     df = cached_df.copy(deep = True)
@@ -52,7 +52,7 @@ def main():
     latest_date = df['date'].max().date().strftime('%d %b %Y')
     latest_date = (df['date'].max() +datetime.timedelta(days=1)).date().strftime('%d %b %Y')
 
-    st.markdown("### Data is based on reports published on {}".format(latest_date))
+    st.markdown("#### Data is based on reports published on {}".format(latest_date))
     ############ MAIN CHARTS ####################
     px_settings={'label_value':'',
                  'facet':'',
@@ -131,7 +131,7 @@ def main():
     ############ MAIN CHARTS ####################
 
     ############ HEATMAP CHARTS ##################
-    st.markdown('### *Vaccination coverage using reports published on {}*'.format(latest_date))
+    st.markdown('#### *Vaccination coverage using reports published on {}*'.format(latest_date))
     heatmap_df = overall_state_df.query('age_group == "16_or_above"')
     fig1, fig2 = chart.coverage_heatmap(sag_df, overall_state_df)
     fig3 = chart.heatmap_delta_data_static(heatmap_df)
@@ -166,7 +166,7 @@ def main():
     # if you want to be cheeky and link this to the radio button, you can just use eta_src = plotly_df
     eta_src = overall_state_df.query('age_group == "16_or_above"')
     with col1:
-        st.markdown("### *Projected date to hit 70% and 80% first dose for 16+ population*")
+        st.markdown("#### *Projected date to hit 70% and 80% first dose for 16+ population*")
         eta_df = compare.construct_eta_data(eta_src, 'state', user, dose='dose1')
         st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
                                         user=user,
@@ -176,7 +176,7 @@ def main():
                                         config={'displayModeBar':False, 'staticPlot':True})
 
     with col2:
-        st.markdown("### *Projected date to hit 70% and 80% double dose for 16+ population*")
+        st.markdown("#### *Projected date to hit 70% and 80% double dose for 16+ population*")
         eta_df = compare.construct_eta_data(eta_src, 'state', user)
         st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
                                         user=user,
