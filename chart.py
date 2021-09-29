@@ -1,6 +1,7 @@
 import plotly.express as px
 import plotly.figure_factory as ff
 from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 from itertools import cycle
@@ -80,7 +81,7 @@ def eta_chart(df, group_col, user, hl=False, annot=False):
     discrete_map_task = { '70%': color_70_default, '80%': color_80_default }
     fig = px.timeline(df, x_start="date", x_end="est_target_date", y=group_col,
                         color='eta', color_discrete_map=discrete_map_task,
-                        category_orders={"state": config.states_rank},
+                        category_orders={"state": config.states_rank, "age_group": config.ag_rank},
                         )
     fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0, traceorder='reversed'),
                         margin=dict(l=0,r=0, t=50, b=20),
@@ -149,7 +150,7 @@ def vac_rate_facet(df, cols, label, facet='state'):
                 labels={'value': label, 'variable': 'dose type'},
                 facet_col=facet,
                 facet_col_wrap=3,
-                category_orders={"state": config.states_rank},
+                category_orders={"state": config.states_rank, "age_group": config.ag_rank},
                 color_discrete_sequence = px.colors.qualitative.Dark2
                 )
 
@@ -170,7 +171,7 @@ def vac_rate_chart(df, col, col_label, grouping):
     """
 
     fig = px.line(df, x='date', y=col, color=grouping,
-                category_orders={"state": config.states_rank},
+                category_orders={"state": config.states_rank, "age_group": config.ag_rank},
                 labels={'date':'date', col:col_label},
                 color_discrete_sequence = px.colors.qualitative.Set1
         )
@@ -190,7 +191,7 @@ def line_chart(df, **kwargs):
     """
 
     fig = px.line(df, x='date', y=kwargs['y'], color=kwargs['color'],
-                category_orders={"state": config.states_rank},
+                category_orders={"state": config.states_rank, "age_group": config.ag_rank},
                 labels={'date':'date', kwargs['y']:kwargs['y_label']},
                 range_y=kwargs['range_y'],
                 color_discrete_sequence = px.colors.qualitative.Set1
@@ -255,6 +256,30 @@ def add_target_hline(fig):
 
     return
 
+def add_target_hline_mid(fig):
+    fig.add_hline(y=30, line_dash="dot",
+              annotation_text="30%",
+              opacity=0.3,
+              annotation_position="bottom left")
+    fig.add_hline(y=40, line_dash="dot",
+              annotation_text="40%",
+              opacity=0.3,
+              annotation_position="bottom left")
+    fig.add_hline(y=50, line_dash="dot",
+              annotation_text="50%",
+              opacity=0.3,
+              annotation_position="bottom left")
+    fig.add_hline(y=60, line_dash="dot",
+              annotation_text="60%",
+              opacity=0.3,
+              annotation_position="bottom left")
+    fig.add_hline(y=70, line_dash="dot",
+              annotation_text="70%",
+              opacity=0.3,
+              annotation_position="bottom left")
+
+    return
+
 def add_annot_vrect(fig, df):
     list_annot = ["{}: {}".format(g, v) for (g, v) in list(df.to_records(index=False)) ]
     annot_str = '<br>'.join(list_annot[:math.ceil(len(list_annot)/2)])
@@ -273,14 +298,14 @@ def add_annot_vrect(fig, df):
                     line_width=0)
 
 
-def facet_chart(df, **kwargs):
+def old_facet_chart(df, **kwargs):
     fig=px.line(df,
                 x='date',
                 y=kwargs['y'],
                 labels={'value': kwargs['label_value'], 'variable': 'dose type', 'dose1_pct': 'dose1', 'ma7_vac_rate' : 'vac_rate'},
                 facet_col=kwargs['facet'],
                 facet_col_wrap=kwargs['facet_col_wrap'],
-                category_orders={"state": config.states_rank},
+                category_orders={"state": config.states_rank, "age_group": config.ag_rank},
                 color_discrete_sequence = px.colors.qualitative.Dark2
                 )
 
@@ -290,7 +315,10 @@ def facet_chart(df, **kwargs):
     fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     legendnames = {'dose1_pct': 'dose1', 'dose2_pct': 'dose2',
                     'ma7_vac_rate' : 'dose1+dose2', 'ma7_dose1_vac_rate' : 'dose1',
-                    'ma7_dose2_vac_rate' : 'dose2'
+                    'ma7_dose2_vac_rate' : 'dose2',
+                    'delta_dose1' : 'dose1',
+                    'delta_dose2' : 'dose2',
+                    'delta_dose12' : 'dose1+dose2',
             }
     fig.for_each_trace(lambda t: t.update(name = legendnames[t.name],
                                   legendgroup = legendnames[t.name],
@@ -608,7 +636,7 @@ def facet_chart_bar(df, **kwargs):
                 facet_col=kwargs['facet'],
                 facet_col_wrap=kwargs['facet_col_wrap'],
                 # range_x=[0,110],
-                category_orders={"state": config.states_rank},
+                category_orders={"state": config.states_rank, "age_group": config.ag_rank},
                 color_discrete_sequence = px.colors.qualitative.Dark2
                 )
 
@@ -639,6 +667,202 @@ def facet_chart_bar(df, **kwargs):
         if i['legendgroup'] == 'dose2':
             i['text'] = []
             i['texttemplate'] = []
+
+    return fig
+
+
+def subplot_practice(overall_state_df, overall_ag_df, sag_df):
+    overall_state_df['total_vac'] = overall_state_df['dose1_cnt'] + overall_state_df['dose2_cnt']
+    twelve_plus_df = overall_state_df.query('age_group == "12_or_above"')
+    df = twelve_plus_df.query('state == "NSW"')
+    df['dose1_prop'] = round(df['delta_dose1'] / df['delta_dose12'] * 100, 2)
+    df['dose2_prop'] = round(df['delta_dose2'] / df['delta_dose12'] * 100, 2)
+
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    # fig = px.line(df,
+    #         x='date', y=['delta_dose12'],
+    #         labels={'date':'date', 'value':'percentage point', 'variable': 'vac status'}
+    #     )
+    # fig.add_trace(go.Scatter(x=df['date'].unique(), y=df['delta_dose12'], fill='tozeroy'),
+                    # secondary_y=False)
+    # print(df)
+    fig.add_bar(x=df['date'].unique(),
+                y=df['dose2_prop'], alignmentgroup='date', secondary_y=True, opacity=0.4)
+    fig.add_bar(x=df['date'].unique(),
+                y=df['dose1_prop'], alignmentgroup='date', secondary_y=True, opacity=0.4)
+    fig.update_layout(barmode='stack')
+    # fig.add_trace(go.Scatter(x=df['date'].unique(), y=df['dose1_prop']), secondary_y=True)
+    # fig.add_trace(go.Scatter(x=df['date'].unique(), y=df['dose2_prop']), secondary_y=True)
+    # fig.update_layout(yaxis_range=[0,500000])
+    # fig.update_layout(yaxis2_range=[0,400])
+
+
+    return fig
+
+
+def volume_chart(df, **kwargs):
+    # determine if we're cutting by age_group or state
+
+    max_dose=df['delta_dose12'].max() * config.graph_max_scale
+    if kwargs['facet'] == "state":
+        # If we're grouping by states, we want to exclude 'state == AUS'
+        df = df.query('state != "AUS"')
+    else:
+        # If we're grouping by age-group...
+        max_dose=df.groupby('date')['delta_dose12'].sum().reset_index()['delta_dose12'].max()\
+                        * config.graph_max_scale
+
+    fig = px.bar(df, x='date', y=kwargs['y'], color=kwargs['color'],
+                category_orders={"state": config.states_rank, "age_group": config.ag_rank},
+                labels={'date':'date', kwargs['y']:kwargs['y_label']},
+                range_y=[0,max_dose],
+                color_discrete_sequence = px.colors.qualitative.Set1
+        )
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
+                      margin=dict(l=0,r=0, t=80, b=20),
+            )
+    fig.update_layout({'legend_title_text': ''})
+    totals=df.groupby('date')[kwargs['y']].sum().reset_index()[kwargs['y']]
+
+    fig.update_layout(
+            title=dict(font=dict(size=18),
+                        text=kwargs['graph_title'],
+                        xanchor='center',
+                        yanchor='top',
+                        x=0.5,
+                        y=1,
+                    ),
+            xaxis=dict(fixedrange=True),
+            yaxis=dict(fixedrange=True),
+            hoverlabel=dict(
+                bgcolor="white",
+                font_size=16,
+                font_family="Rockwell"
+            ),
+            hovermode='x',
+        )
+
+    fig.update_traces(
+        hovertemplate='%{y:10,.0f}'+' %{hovertext}',
+        hovertext=['out of {:,.0f}'.format(i) for i in totals]
+    )
+
+    return fig
+
+
+def volume_chart_prop(df, **kwargs):
+    # determine if we're cutting by age_group or state
+
+    fig = px.line(df, x='date', y=kwargs['y'], color=kwargs['color'],
+                category_orders={"state": config.states_rank, "age_group": config.ag_rank},
+                labels={'date':'date', kwargs['y']:kwargs['y_label']},
+                range_y=[0,100],
+                color_discrete_sequence = px.colors.qualitative.Set1
+        )
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
+                      margin=dict(l=0,r=0, t=80, b=20),
+            )
+    fig.update_layout({'legend_title_text': ''})
+    totals=df.groupby('date')[kwargs['y']].sum().reset_index()[kwargs['y']]
+
+    fig.update_layout(
+            title=dict(font=dict(size=18),
+                        text=kwargs['graph_title'],
+                        xanchor='center',
+                        yanchor='top',
+                        x=0.5,
+                        y=1,
+                    ),
+            xaxis=dict(fixedrange=True),
+            yaxis=dict(fixedrange=True),
+            hoverlabel=dict(
+                bgcolor="white",
+                font_size=16,
+                font_family="Rockwell"
+            ),
+            hovermode='x',
+        )
+
+    fig.update_traces(
+        hovertemplate='%{y:10,.0f}'+' %{hovertext}',
+        hovertext=['out of {:,.0f}'.format(i) for i in totals]
+    )
+
+    return fig
+
+
+def facet_chart(df, opt_aa, **kwargs):
+    pkwargs={}
+    if opt_aa=='Dose 1 vs 2 Proportion':
+        pxtype=px.bar
+        pkwargs['opacity']=0.7,
+        pkwargs['range_y']=[0,100]
+    else:
+        pxtype=px.line
+
+    fig=pxtype(df,
+                x='date',
+                y=kwargs['y'],
+                labels={'value': kwargs['label_value'], 'variable': 'dose type', 'dose1_pct': 'dose1', 'ma7_vac_rate' : 'vac_rate'},
+                facet_col=kwargs['facet'],
+                facet_col_wrap=kwargs['facet_col_wrap'],
+                # category_orders={"state": config.states_rank, "age_group": config.ag_rank},
+                color_discrete_sequence = px.colors.qualitative.Dark2,
+                **pkwargs
+                )
+
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="center", x=0.5),
+                      margin=dict(l=0,r=0, t=50, b=20))
+    fig.update_layout({'legend_title_text': ''})
+    fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    legendnames = {'dose1_pct': 'dose1', 'dose2_pct': 'dose2',
+                    'ma7_vac_rate' : 'dose1+dose2', 'ma7_dose1_vac_rate' : 'dose1',
+                    'ma7_dose2_vac_rate' : 'dose2',
+                    'delta_dose1' : 'dose1',
+                    'delta_dose2' : 'dose2',
+                    'delta_dose12_mod' : 'dose1+dose2',
+                    'dose1_prop' : 'dose1',
+                    'dose2_prop' : 'dose2',
+            }
+    fig.for_each_trace(lambda t: t.update(name = legendnames[t.name],
+                                  legendgroup = legendnames[t.name],
+                                     )
+                    )
+
+    fig.update_traces(
+        hovertemplate='%{y}'
+    )
+
+    fig.update_layout(
+            hoverlabel=dict(
+                bgcolor="white",
+                font_size=16,
+                font_family="Rockwell"
+            ),
+            hovermode='x unified',
+            xaxis=dict(fixedrange=True),
+            yaxis=dict(fixedrange=True),
+        )
+
+    # WIP to add trendlines of vaccination rate
+    # aus = df.query('state == "AUS"')['ma7_vac_rate'] * 20
+    # aus = df.query('age_group == "16-29"')['ma7_vac_rate'] * 20
+    # trace = go.Scatter(x=df["date"].unique(), y=aus, line_color="black", name="AUS", hoverinfo='skip')
+    # fig.add_trace(trace, row=1, col=1)
+    # trace.update(legendgroup="trendline", showlegend=False)
+    # nsw = df.query('state == "NSW"')['ma7_vac_rate'] * 20
+    # nsw = df.query('age_group == "80+"')['ma7_vac_rate'] * 20
+    # trace = go.Scatter(x=df["date"].unique(), y=nsw, line_color="black", name="NSW", hoverinfo='skip')
+    # fig.add_trace(trace, row=1, col=6)
+    # trace.update(legendgroup="trendline", showlegend=False)
+    # fig.update_traces(selector=-2, showlegend=False)
+    # fig.update_traces(selector=-1, showlegend=False)
+
+    if kwargs['label_value'] == "coverage (%)":
+        add_target_hline(fig)
+    elif kwargs['label_value'] == 'proportion (%)':
+        add_target_hline_mid(fig)
 
     return fig
 

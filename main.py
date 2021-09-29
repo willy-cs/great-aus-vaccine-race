@@ -64,11 +64,11 @@ def main():
 
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
-        opt_aa=st.radio('Show me charts of', list(config.analysis_options.keys()))
+        opt_aa=st.radio('Show me charts of COVID-19 vaccination', list(config.analysis_options.keys()))
 
         px_settings['y'] = [i[0] for i in config.analysis_options[opt_aa]]
         px_settings['label_value'] = config.analysis_options[opt_aa][0][1]
-        if opt_aa == "Vaccination Coverage":
+        if opt_aa == "Coverage":
             px_settings['range_y'] = None
 
     with col2:
@@ -99,7 +99,11 @@ def main():
             if opt_ag != '16+ (eligible)' and opt_ag != '12+':
                 plotly_df = sag_df.query('age_group == @opt_ag')
         elif opt_as == "Age Groups":
-            plotly_df = overall_ag_df
+            if opt_ag == "16+ (eligible)":
+                plotly_df = overall_ag_df.query('age_group != "12-15"')
+            elif opt_ag == "12+":
+                plotly_df = overall_ag_df
+
             if opt_aj != "AUS":
                 plotly_df = sag_df.query('state == @opt_aj')
             px_settings['facet'] = px_settings['color'] = 'age_group'
@@ -108,20 +112,27 @@ def main():
         select_options={'group' : opt_as[:-1].lower(),
                         'measure' : opt_aa.lower()
                         }
-        opt_ac=st.radio('with each graph is a', config.chart_options,
-                            format_func=lambda x: select_options.get(x))
+        options=config.chart_options
+        if opt_aa == 'Dose 1 vs 2 Proportion':
+            options=['group']
+        opt_ac=st.radio('with each graph is a', options, format_func=lambda x: select_options.get(x))
 
         if opt_ac == "group":
-            fig=chart.facet_chart(plotly_df, **px_settings)
+            fig=chart.facet_chart(plotly_df, opt_aa, **px_settings)
             figs.append(fig)
         elif opt_ac == "measure":
             for px_info in config.analysis_options[opt_aa]:
                 (px_settings['y'], px_settings['y_label'], px_settings['graph_title']) = px_info
-                fig=chart.line_chart(plotly_df, **px_settings)
+                if opt_aa in ['Vol Raw']:
+                    fig=chart.volume_chart(plotly_df, **px_settings)
+                elif opt_aa in ['Dose 1 vs 2 Proportion']:
+                    fig=chart.volume_chart_prop(plotly_df, **px_settings)
+                else:
+                    fig=chart.line_chart(plotly_df, **px_settings)
                 figs.append(fig)
-            # if opt_aa == "Vaccination Coverage":
-            #     fig3 = chart.heatmap_delta_data_dynamic(plotly_df, opt_ag, opt_aj, opt_as)
-            #     figs.append(fig3)
+            if opt_aa == "Coverage":
+                fig3 = chart.heatmap_delta_data_dynamic(plotly_df, opt_ag, opt_aj, opt_as)
+                figs.append(fig3)
 
     if len(figs) > 1:
         for col, fig in zip(st.columns(len(figs)), figs):
