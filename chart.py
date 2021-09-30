@@ -160,24 +160,8 @@ def line_chart(df, **kwargs):
     # ann.append({'x': df['date'].min()+datetime.timedelta(days=7),
     #                 'y':1, 'yanchor':'top', 'yref':'paper',
     #                 'text': 'watermark text', 'showarrow': False})
-    fig.update_layout(
-            title=dict(font=dict(size=18),
-                        text=kwargs['graph_title'],
-                        xanchor='center',
-                        yanchor='top',
-                        x=0.5,
-                        y=1,
-                    ),
-            annotations=ann,
-            xaxis=dict(fixedrange=True),
-            yaxis=dict(fixedrange=True),
-            hoverlabel=dict(
-                bgcolor="white",
-                font_size=16,
-                font_family="Rockwell"
-            ),
-            hovermode='x',
-        )
+    layout_style(fig, **kwargs)
+    fig.update_layout(annotations=ann)
 
     fig.update_traces(
         hovertemplate='%{y}'
@@ -241,54 +225,6 @@ def add_annot_vrect(fig, df):
                     # fillcolor="green",
                     # opacity=0.25,
                     line_width=0)
-
-
-def old_facet_chart(df, **kwargs):
-    fig=px.line(df,
-                x='date',
-                y=kwargs['y'],
-                labels={'value': kwargs['label_value'], 'variable': 'dose type', 'dose1_pct': 'dose1', 'ma7_vac_rate' : 'vac_rate'},
-                facet_col=kwargs['facet'],
-                facet_col_wrap=kwargs['facet_col_wrap'],
-                category_orders={"state": config.states_rank, "age_group": config.ag_rank},
-                color_discrete_sequence = px.colors.qualitative.Dark2
-                )
-
-    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="center", x=0.5),
-                      margin=dict(l=0,r=0, t=50, b=20))
-    fig.update_layout({'legend_title_text': ''})
-    fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
-    legendnames = {'dose1_pct': 'dose1', 'dose2_pct': 'dose2',
-                    'ma7_vac_rate' : 'dose1+dose2', 'ma7_dose1_vac_rate' : 'dose1',
-                    'ma7_dose2_vac_rate' : 'dose2',
-                    'delta_dose1' : 'dose1',
-                    'delta_dose2' : 'dose2',
-                    'delta_dose12' : 'dose1+dose2',
-            }
-    fig.for_each_trace(lambda t: t.update(name = legendnames[t.name],
-                                  legendgroup = legendnames[t.name],
-                                     )
-                    )
-
-    fig.update_traces(
-        hovertemplate='%{y}'
-    )
-
-    fig.update_layout(
-            hoverlabel=dict(
-                bgcolor="white",
-                font_size=16,
-                font_family="Rockwell"
-            ),
-            hovermode='x unified',
-            xaxis=dict(fixedrange=True),
-            yaxis=dict(fixedrange=True),
-        )
-
-    if kwargs['label_value'] == "coverage (%)":
-        add_target_hline(fig)
-
-    return fig
 
 
 def vac_status(df, people, jur, stats):
@@ -513,54 +449,6 @@ def coverage_heatmap(sag_df, overall_state_df):
 
     return figs
 
-def facet_chart_bar(df, **kwargs):
-    df['dose1_fake_pct']=df['dose1_pct'] - df['dose2_pct']
-    # kwargs['y'] = ['dose2_pct', 'dose1_pct']
-    kwargs['y'] = ['dose2_pct', 'dose1_fake_pct']
-    fig=px.bar(df,
-                y='state',
-                x=kwargs['y'],
-                barmode='stack',
-                orientation='h',
-                text='dose1_pct',
-                labels={'value': kwargs['label_value'], 'variable': 'dose type', 'dose1_pct': 'dose1', 'ma7_vac_rate' : 'vac_rate'},
-                facet_col=kwargs['facet'],
-                facet_col_wrap=kwargs['facet_col_wrap'],
-                # range_x=[0,110],
-                category_orders={"state": config.states_rank, "age_group": config.ag_rank},
-                color_discrete_sequence = px.colors.qualitative.Dark2
-                )
-
-    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="center", x=0.5),
-                      margin=dict(l=0,r=0, t=50, b=20),
-                      height=800)
-    fig.update_layout({'legend_title_text': ''})
-    fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
-    legendnames = {'dose1_pct': 'dose1', 'dose2_pct': 'dose2', 'dose1_fake_pct': 'dose1',
-                    'ma7_vac_rate' : 'dose1+dose2', 'ma7_dose1_vac_rate' : 'dose1',
-                    'ma7_dose2_vac_rate' : 'dose2'
-            }
-
-    fig.for_each_trace(lambda t: t.update(name = legendnames[t.name],
-                                  legendgroup = legendnames[t.name],
-                            )
-                    )
-
-    fig.update_traces(texttemplate='%{text:.2}%', textposition='outside')
-    fig.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
-    fig.for_each_xaxis(lambda xaxis: xaxis.update(showticklabels=True))
-
-    # fig['layout']['yaxis2'] = {'anchor': 'x2', 'domain': [0.0, 0.2866666666666666], 'matches': 'y', 'showticklabels': True}
-    # fig['layout']['yaxis3'] = {'anchor': 'x3', 'domain': [0.0, 0.2866666666666666], 'matches': 'y', 'showticklabels': True}
-    # fig['layout']['yaxis6'] = {'anchor': 'x6', 'domain': [0.35666666666666663, 0.6433333333333333], 'matches': 'y', 'showticklabels': True, 'annotations': {'x' : 4, 'y': 'ACT', 'text': 'tried' }}
-
-    for i in fig['data']:
-        if i['legendgroup'] == 'dose2':
-            i['text'] = []
-            i['texttemplate'] = []
-
-    return fig
-
 
 def subplot_practice(overall_state_df, overall_ag_df, sag_df):
     overall_state_df['total_vac'] = overall_state_df['dose1_cnt'] + overall_state_df['dose2_cnt']
@@ -594,7 +482,6 @@ def subplot_practice(overall_state_df, overall_ag_df, sag_df):
 
 def volume_chart(df, **kwargs):
     # determine if we're cutting by age_group or state
-
     max_dose=df['delta_dose12'].max() * config.graph_max_scale
     if kwargs['facet'] == "state":
         # If we're grouping by states, we want to exclude 'state == AUS'
@@ -612,27 +499,11 @@ def volume_chart(df, **kwargs):
         )
     fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
                       margin=dict(l=0,r=0, t=80, b=20),
+                      legend_title_text='',
             )
-    fig.update_layout({'legend_title_text': ''})
     totals=df.groupby('date')[kwargs['y']].sum().reset_index()[kwargs['y']]
 
-    fig.update_layout(
-            title=dict(font=dict(size=18),
-                        text=kwargs['graph_title'],
-                        xanchor='center',
-                        yanchor='top',
-                        x=0.5,
-                        y=1,
-                    ),
-            xaxis=dict(fixedrange=True),
-            yaxis=dict(fixedrange=True),
-            hoverlabel=dict(
-                bgcolor="white",
-                font_size=16,
-                font_family="Rockwell"
-            ),
-            hovermode='x',
-        )
+    layout_style(fig, **kwargs)
 
     fig.update_traces(
         hovertemplate='%{y:10,.0f}'+' %{hovertext}',
@@ -642,21 +513,76 @@ def volume_chart(df, **kwargs):
     return fig
 
 
-def volume_chart_prop(df, **kwargs):
-    # determine if we're cutting by age_group or state
+def dose1v2_prop_chart(df, **kwargs):
+    df = compare.get_latest(df)
+    renamed = ['dose1_prop', 'dose2_prop']
+    if kwargs['y'] == '1':
+        cols = ['delta_dose1_mod', 'delta_dose2_mod']
+    elif kwargs['y'] == '7':
+        cols = ['delta_dose1_7d', 'delta_dose2_7d']
+    elif kwargs['y'] == '30':
+        cols = ['delta_dose1_30d', 'delta_dose2_30d']
 
-    fig = px.line(df, x='date', y=kwargs['y'], color=kwargs['color'],
-                category_orders={"state": config.states_rank, "age_group": config.ag_rank},
-                labels={'date':'date', kwargs['y']:kwargs['y_label']},
-                range_y=[0,100],
-                color_discrete_sequence = px.colors.qualitative.Set1
+    df['dose1_prop'] = round(100 * df[cols[0]] / (df[cols[0]] + df[cols[1]]), 2)
+    df['dose2_prop'] =  100 - df['dose1_prop']
+
+    w_df = df[['date', kwargs['facet'], 'dose1_prop', 'dose2_prop']]
+    df_melted = pd.melt(w_df, id_vars=['date', kwargs['facet']], value_vars=['dose1_prop', 'dose2_prop'], var_name='dose', value_name='prop')
+    df_melted['proportion']=np.where(df_melted['dose']=='dose1_prop',
+                                        -1*df_melted['prop'],
+                                        df_melted['prop'])
+    range_max = df_melted['proportion'].abs().max() * 1.1
+
+    # rename the negative ticks and you're all set
+    fig= px.bar(df_melted, x='proportion', y=kwargs['facet'], barmode='group',
+                color='dose',
+                text='prop',
+                range_x=[-range_max,range_max],
+                color_discrete_sequence = px.colors.qualitative.Dark2,
+                category_orders={"state": config.states_rank_heatmap, "age_group": config.ag_rank},
+                hover_data={'prop': False, kwargs['facet']:False, 'dose':False, 'proportion':False},
+                orientation='h')
+
+    fig.update_layout(
+        barmode='relative',
+        bargap=0, # gap between bars of adjacent location coordinates.
+        bargroupgap=0.5, # gap between bars of the same location coordinate.
+        legend_title_text='',
+        legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="center", x=0.5),
+        margin=dict(l=0,r=0, t=80, b=20),
+        xaxis = dict(
+            tickmode = 'array',
+            tickvals = [-100, -75, -50, -25, 0, 25, 50, 75, 100],
+            ticktext = [100, 75, 50, 25, 0, 25, 50, 75, 100]
         )
-    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
-                      margin=dict(l=0,r=0, t=80, b=20),
-            )
-    fig.update_layout({'legend_title_text': ''})
-    totals=df.groupby('date')[kwargs['y']].sum().reset_index()[kwargs['y']]
+    )
 
+    layout_style(fig, **kwargs)
+
+    fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    legendnames = { 'dose1_prop' : 'dose1',
+                    'dose2_prop' : 'dose2',
+            }
+
+    fig.for_each_trace(lambda t: t.update(name = legendnames[t.name],
+                                  legendgroup = legendnames[t.name],
+                     ))
+
+    fig.update_traces(
+        texttemplate='%{text:.2f}%', textposition='inside',
+        # hovertemplate='%{x}',
+    )
+
+    disable_hover(fig)
+
+    return fig
+
+def disable_hover(fig):
+    fig.update_traces(hoverinfo='skip', hovertemplate=None)
+
+    return fig
+
+def layout_style(fig, **kwargs):
     fig.update_layout(
             title=dict(font=dict(size=18),
                         text=kwargs['graph_title'],
@@ -674,11 +600,6 @@ def volume_chart_prop(df, **kwargs):
             ),
             hovermode='x',
         )
-
-    fig.update_traces(
-        hovertemplate='%{y:10,.0f}'+' %{hovertext}',
-        hovertext=['out of {:,.0f}'.format(i) for i in totals]
-    )
 
     return fig
 
@@ -689,6 +610,8 @@ def facet_chart(df, opt_aa, **kwargs):
         pxtype=px.bar
         pkwargs['opacity']=1,
         pkwargs['range_y']=[0,100]
+        df['dose1_prop'] = round(100 * df['delta_dose1_mod'] / df['delta_dose12_mod'], 2)
+        df['dose2_prop'] =  100 - df['dose1_prop']
     else:
         pxtype=px.line
 
@@ -704,8 +627,8 @@ def facet_chart(df, opt_aa, **kwargs):
                 )
 
     fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="center", x=0.5),
-                      margin=dict(l=0,r=0, t=50, b=20))
-    fig.update_layout({'legend_title_text': ''})
+                      margin=dict(l=0,r=0, t=50, b=20),
+                      legend_title_text='')
     fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     legendnames = {'dose1_pct': 'dose1', 'dose2_pct': 'dose2',
                     'ma7_vac_rate' : 'dose1+dose2', 'ma7_dose1_vac_rate' : 'dose1',
@@ -721,9 +644,7 @@ def facet_chart(df, opt_aa, **kwargs):
                                      )
                     )
 
-    fig.update_traces(
-        hovertemplate='%{y}'
-    )
+    fig.update_traces(hovertemplate='%{y}')
 
     fig.update_layout(
             hoverlabel=dict(

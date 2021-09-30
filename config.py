@@ -23,8 +23,14 @@ vac_rawvol_info = [['delta_dose1', 'volume', 'Dose 1 volume'],
                     ['delta_dose2', 'volume', 'Dose 2 volume'],
                     ['delta_dose12', 'volume', 'Dose 1 + Dose 2 volume']]
 
-vac_volprop_info = [['dose1_prop', 'proportion (%)', 'Dose 1 Proportion'],
-                    ['dose2_prop', 'proportion (%)', 'Dose 2 Proportion']]
+vac_volprop_info = [['1', 'proportion (%)', 'Doses proportion yesterday'],
+                    ['7', 'proportion (%)', 'Doses proportion in the last 7 days'],
+                    ['30', 'proportion (%)', 'Doses proportion in the last 30 days']
+                    ]
+
+vac_volprop_facet_info = [['dose1_prop', 'proportion (%)', 'Dose 1 proportion'],
+                          ['dose2_prop', 'proportion (%)', 'Dose 2 proportion']
+                          ]
 
 analysis_options={'Growth Rate' : vac_rate_info,
                    'Coverage' : vac_status_info,

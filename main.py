@@ -63,6 +63,7 @@ def main():
     figs =[]
 
     col1, col2, col3, col4, col5 = st.columns(5)
+    extra_query = ''
     with col1:
         opt_aa=st.radio('Show me charts of COVID-19 vaccination', list(config.analysis_options.keys()))
 
@@ -90,19 +91,20 @@ def main():
         opt_as=st.radio('across', group_options)
 
         if opt_as == "Jurisdictions":
+            plotly_df = overall_state_df
             if opt_ag == "16+ (eligible)":
-                plotly_df = overall_state_df.query('age_group == "16_or_above"')
+                extra_query= 'age_group == "16_or_above"'
             elif opt_ag == "12+":
-                plotly_df = overall_state_df.query('age_group == "12_or_above"')
+                extra_query= 'age_group == "12_or_above"'
+
             px_settings['facet'] = px_settings['color'] = 'state'
             px_settings['facet_col_wrap'] = 9
             if opt_ag != '16+ (eligible)' and opt_ag != '12+':
                 plotly_df = sag_df.query('age_group == @opt_ag')
         elif opt_as == "Age Groups":
+            plotly_df = overall_ag_df
             if opt_ag == "16+ (eligible)":
-                plotly_df = overall_ag_df.query('age_group != "12-15"')
-            elif opt_ag == "12+":
-                plotly_df = overall_ag_df
+                extra_query = 'age_group != "12-15"'
 
             if opt_aj != "AUS":
                 plotly_df = sag_df.query('state == @opt_aj')
@@ -113,11 +115,19 @@ def main():
                         'measure' : opt_aa.lower()
                         }
         options=config.chart_options
-        if opt_aa == 'Dose 1 vs 2 Proportion':
-            options=['group']
+        # if opt_aa == 'Dose 1 vs 2 Proportion':
+        #     options=['group']
         opt_ac=st.radio('with each graph is a', options, format_func=lambda x: select_options.get(x))
 
+        if extra_query != '':
+            plotly_df = plotly_df.query(extra_query)
+
         if opt_ac == "group":
+            if opt_aa == 'Dose 1 vs 2 Proportion':
+                setting = config.vac_volprop_facet_info
+                px_settings['y'] = [i[0] for i in setting]
+                px_settings['label_value'] = setting[0][1]
+
             fig=chart.facet_chart(plotly_df, opt_aa, **px_settings)
             figs.append(fig)
         elif opt_ac == "measure":
@@ -126,7 +136,7 @@ def main():
                 if opt_aa in ['Vol Raw']:
                     fig=chart.volume_chart(plotly_df, **px_settings)
                 elif opt_aa in ['Dose 1 vs 2 Proportion']:
-                    fig=chart.volume_chart_prop(plotly_df, **px_settings)
+                    fig=chart.dose1v2_prop_chart(plotly_df, **px_settings)
                 else:
                     fig=chart.line_chart(plotly_df, **px_settings)
                 figs.append(fig)

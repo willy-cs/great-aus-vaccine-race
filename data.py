@@ -193,8 +193,6 @@ def extra_calculation(a):
     a['delta_dose1_mod'] = a['delta_dose1'].clip(0)
     a['delta_dose2_mod'] = a['delta_dose2'].clip(0)
     a['delta_dose12_mod'] = a['delta_dose1_mod'] + a['delta_dose2_mod']
-    a['dose1_prop'] = round(a['delta_dose1_mod'] / a['delta_dose12_mod'] * 100, 2)
-    a['dose2_prop'] = round(a['delta_dose2_mod'] / a['delta_dose12_mod'] * 100, 2)
     # replacing 0 in moving average with small values to make sure we're not predicting infinity
     a['ma7_dose1'] = a['delta_dose1_mod'].rolling(7).mean().replace(0, 0.01)
     a['ma7_dose2'] = a['delta_dose2_mod'].rolling(7).mean().replace(0, 0.01)
