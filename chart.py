@@ -546,7 +546,7 @@ def dose1v2_prop_chart(df, **kwargs):
     fig.update_layout(
         barmode='relative',
         bargap=0, # gap between bars of adjacent location coordinates.
-        bargroupgap=0.5, # gap between bars of the same location coordinate.
+        bargroupgap=0.2, # gap between bars of the same location coordinate.
         legend_title_text='',
         legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="center", x=0.5),
         margin=dict(l=0,r=0, t=80, b=20),
