@@ -135,9 +135,12 @@ def main():
                 figs.append(fig3)
 
     if len(figs) > 1:
-        for col, fig in zip(st.columns(len(figs)), figs):
+        for col, fig, i in zip(st.columns(len(figs)), figs, range(0, len(figs))):
             with col:
-                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar':False})
+                p_config={'displayModeBar':False}
+                if i == 2 and opt_aa == "Coverage":
+                    p_config={'displayModeBar':False, 'staticPlot': True}
+                st.plotly_chart(fig, use_container_width=True, config=p_config)
     else:
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar':False} )
     ############ MAIN CHARTS ####################
