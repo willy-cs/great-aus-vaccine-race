@@ -687,7 +687,7 @@ def facet_chart(df, opt_aa, **kwargs):
     pkwargs={}
     if opt_aa=='Dose 1 vs 2 Proportion':
         pxtype=px.bar
-        pkwargs['opacity']=0.7,
+        pkwargs['opacity']=1,
         pkwargs['range_y']=[0,100]
     else:
         pxtype=px.line

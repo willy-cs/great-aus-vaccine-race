@@ -28,7 +28,7 @@ vac_volprop_info = [['dose1_prop', 'proportion (%)', 'Dose 1 Proportion'],
 
 analysis_options={'Growth Rate' : vac_rate_info,
                    'Coverage' : vac_status_info,
-                   # 'Dose 1 vs 2 Proportion' : vac_volprop_info,
+                   'Dose 1 vs 2 Proportion' : vac_volprop_info,
                    # 'Vac Vol Raw' : vac_rawvol_info,
                     }
 
