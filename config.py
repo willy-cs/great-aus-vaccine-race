@@ -43,8 +43,8 @@ vac_rate_vs_coverage_info = [[('dose1_pct', 'ma7_dose1_vac_rate'),
 analysis_options={'Growth Rate' : vac_rate_info,
                    'Coverage' : vac_status_info,
                    'Dose 1 vs 2 Proportion' : vac_volprop_info,
-                   'Growth Rate vs Coverage' : vac_rate_vs_coverage_info
-                   # 'Vac Vol Raw' : vac_rawvol_info,
+                   'Growth Rate vs Coverage' : vac_rate_vs_coverage_info,
+                   # 'Volume' : vac_rawvol_info,
                     }
 
 

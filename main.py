@@ -128,15 +128,16 @@ def main():
                 px_settings['y'] = [i[0] for i in setting]
                 px_settings['label_value'] = setting[0][1]
 
-
-            # if opt_aa == 'Growth Rate vs Coverage':
-            #     fig=chart.exp_facet_chart(plotly_df, opt_aa, **px_settings)
-            fig=chart.facet_chart(plotly_df, opt_aa, **px_settings)
-            figs.append(fig)
+            if opt_aa == 'Growth Rate vs Coverage':
+                fig=chart.exp_facet_chart(plotly_df, opt_aa, **px_settings)
+                figs.append(fig)
+            else:
+                fig=chart.facet_chart(plotly_df, opt_aa, **px_settings)
+                figs.append(fig)
         elif opt_ac == "measure":
             for px_info in config.analysis_options[opt_aa]:
                 (px_settings['y'], px_settings['y_label'], px_settings['graph_title']) = px_info
-                if opt_aa in ['Vol Raw']:
+                if opt_aa in ['Volume']:
                     fig=chart.volume_chart(plotly_df, **px_settings)
                 elif opt_aa in ['Dose 1 vs 2 Proportion']:
                     fig=chart.dose1v2_prop_chart(plotly_df, **px_settings)

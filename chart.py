@@ -703,39 +703,36 @@ def facet_chart(df, opt_aa, **kwargs):
 
 
 def exp_facet_chart(df, opt_aa, **kwargs):
-    pkwargs={}
-    if opt_aa=='Dose 1 vs 2 Proportion':
-        pxtype=px.bar
-        pkwargs['opacity']=1,
-        pkwargs['range_y']=[0,100]
-        df['dose1_prop'] = round(100 * df['delta_dose1_mod'] / df['delta_dose12_mod'], 2)
-        df['dose2_prop'] =  100 - df['dose1_prop']
-    else:
-        pxtype=px.line
+    if opt_aa == 'Growth Rate vs Coverage':
+        # special case of handling this type of chart, where x-axis is not date
+        (x, y) = kwargs['y']
+        x_label, y_label = ('coverage', 'rate')
+        markers=True
 
-    fig=pxtype(df,
-                x='date',
-                y=kwargs['y'],
-                labels={'value': kwargs['label_value'], 'variable': 'dose type', 'dose1_pct': 'dose1', 'ma7_vac_rate' : 'vac_rate'},
+    subset_df = df[[kwargs['facet'], 'dose1_pct', 'ma7_dose1_vac_rate']]
+    subset2_df = df[[kwargs['facet'], 'dose2_pct', 'ma7_dose2_vac_rate']]
+    subset2_df.rename(columns = {'dose2_pct' : 'dose1_pct'}, inplace=True)
+    xdf=pd.concat([subset_df, subset2_df])
+    xdf.rename(columns={'dose1_pct': 'coverage'}, inplace=True)
+
+    fig=px.line(xdf,
+                x='coverage',
+                y=['ma7_dose1_vac_rate', 'ma7_dose2_vac_rate'],
+                labels={'value': 'MA-7 vac growth rate', 'coverage' : 'coverage (%)'},
                 facet_col=kwargs['facet'],
                 facet_col_wrap=kwargs['facet_col_wrap'],
-                # category_orders={"state": config.states_rank, "age_group": config.ag_rank},
+                category_orders={"state": config.states_rank, "age_group": config.ag_rank},
                 color_discrete_sequence = px.colors.qualitative.Dark2,
-                **pkwargs
                 )
+
 
     fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="center", x=0.5),
                       margin=dict(l=0,r=0, t=50, b=20),
                       legend_title_text='')
     fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     legendnames = {'dose1_pct': 'dose1', 'dose2_pct': 'dose2',
-                    'ma7_vac_rate' : 'dose1+dose2', 'ma7_dose1_vac_rate' : 'dose1',
+                    'ma7_dose1_vac_rate' : 'dose1',
                     'ma7_dose2_vac_rate' : 'dose2',
-                    'delta_dose1' : 'dose1',
-                    'delta_dose2' : 'dose2',
-                    'delta_dose12_mod' : 'dose1+dose2',
-                    'dose1_prop' : 'dose1',
-                    'dose2_prop' : 'dose2',
             }
     fig.for_each_trace(lambda t: t.update(name = legendnames[t.name],
                                   legendgroup = legendnames[t.name],
@@ -750,29 +747,9 @@ def exp_facet_chart(df, opt_aa, **kwargs):
                 font_size=16,
                 font_family="Rockwell"
             ),
-            hovermode='x unified',
+            hovermode='x',
             xaxis=dict(fixedrange=True),
             yaxis=dict(fixedrange=True),
         )
 
-    # WIP to add trendlines of vaccination rate
-    # aus = df.query('state == "AUS"')['ma7_vac_rate'] * 20
-    # aus = df.query('age_group == "16-29"')['ma7_vac_rate'] * 20
-    # trace = go.Scatter(x=df["date"].unique(), y=aus, line_color="black", name="AUS", hoverinfo='skip')
-    # fig.add_trace(trace, row=1, col=1)
-    # trace.update(legendgroup="trendline", showlegend=False)
-    # nsw = df.query('state == "NSW"')['ma7_vac_rate'] * 20
-    # nsw = df.query('age_group == "80+"')['ma7_vac_rate'] * 20
-    # trace = go.Scatter(x=df["date"].unique(), y=nsw, line_color="black", name="NSW", hoverinfo='skip')
-    # fig.add_trace(trace, row=1, col=6)
-    # trace.update(legendgroup="trendline", showlegend=False)
-    # fig.update_traces(selector=-2, showlegend=False)
-    # fig.update_traces(selector=-1, showlegend=False)
-
-    if kwargs['label_value'] == "coverage (%)":
-        add_target_hline(fig)
-    elif kwargs['label_value'] == 'proportion (%)':
-        add_target_hline_mid(fig)
-
     return fig
-
