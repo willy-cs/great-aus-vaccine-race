@@ -149,7 +149,7 @@ def main():
     st.markdown('#### *Vaccination coverage using reports published on {}*'.format(latest_date))
     heatmap_df = overall_state_df.query('age_group == "16_or_above"')
     fig1, fig2 = chart.coverage_heatmap(sag_df, overall_state_df)
-    fig3 = chart.heatmap_delta_data_static(heatmap_df)
+    fig3 = chart.heatmap_delta_data_dynamic(heatmap_df, "16+ population", "", "Jurisdictions")
     for (col, fig) in zip(st.columns(3), [fig1, fig2, fig3]):
         with col:
             st.plotly_chart(fig, use_container_width=True,\

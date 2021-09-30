@@ -127,61 +127,6 @@ def eta_chart(df, group_col, user, hl=False, annot=False):
     return fig
 
 
-def dose1_vs_dose2_rate_facet(df, facet='state'):
-    fig=px.line(df,
-                x='date',
-                y=['ma7_dose1_vac_rate', 'ma7_dose2_vac_rate'],
-                labels={'value': 'MA-7 vaccination rate', 'variable': 'dose type'},
-                facet_col=facet,
-                facet_col_wrap=4)
-
-    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="left", x=0),
-                      margin=dict(l=0,r=0, t=50, b=20))
-    fig.update_layout({'legend_title_text': ''})
-    # fig = all_charts_style(fig)
-
-    return fig
-
-def vac_rate_facet(df, cols, label, facet='state'):
-    fig=px.line(df,
-                x='date',
-                # y=['ma7_vac_rate', 'ma7_dose1_vac_rate', 'ma7_dose2_vac_rate'],
-                y=cols,
-                labels={'value': label, 'variable': 'dose type'},
-                facet_col=facet,
-                facet_col_wrap=3,
-                category_orders={"state": config.states_rank, "age_group": config.ag_rank},
-                color_discrete_sequence = px.colors.qualitative.Dark2
-                )
-
-    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="left", x=0),
-                      margin=dict(l=0,r=0, t=50, b=20))
-    fig.update_layout({'legend_title_text': ''})
-    # fig = all_charts_style(fig)
-
-    return fig
-
-
-def vac_rate_chart(df, col, col_label, grouping):
-    """
-        col: dataframe's column name
-                e.g. 'vac_rate', 'dose1_pct', 'dose2_pct'
-        col_label: the printed column name in graph
-        grouping: 'state' or 'age_group'
-    """
-
-    fig = px.line(df, x='date', y=col, color=grouping,
-                category_orders={"state": config.states_rank, "age_group": config.ag_rank},
-                labels={'date':'date', col:col_label},
-                color_discrete_sequence = px.colors.qualitative.Set1
-        )
-
-    fig = all_charts_style(fig)
-    fig.update_traces(mode="lines")
-
-    return fig
-
-
 def line_chart(df, **kwargs):
     """
         col: dataframe's column name
@@ -425,70 +370,6 @@ def add_custom_age_groups(l_df, total_12plus_df):
 
     return l_df
 
-def heatmap_delta_data_static(overall_state_df):
-    a = compare.get_latest(overall_state_df)
-
-    a['delta_dose1pp']=round(a['delta_dose1']/a['abspop_jun2020'] * 100, 2)
-    a['delta_dose2pp']=round(a['delta_dose2']/a['abspop_jun2020'] * 100, 2)
-    a['delta_dose1pp_7d']=round(a['delta_dose1_7d']/a['abspop_jun2020'] * 100, 1)
-    a['delta_dose2pp_7d']=round(a['delta_dose2_7d']/a['abspop_jun2020'] * 100, 1)
-    a['delta_dose1pp_30d']=round(a['delta_dose1_30d']/a['abspop_jun2020'] * 100, 1)
-    a['delta_dose2pp_30d']=round(a['delta_dose2_30d']/a['abspop_jun2020'] * 100, 1)
-
-    col_groups = [ ['delta_dose1pp', 'delta_dose2pp'],
-                    ['delta_dose1pp_7d', 'delta_dose2pp_7d'],
-                    ['delta_dose1pp_30d', 'delta_dose2pp_30d'] ]
-
-    figs = []
-    for y in col_groups:
-        a['state'] = pd.Categorical(a['state'], config.states_rank_heatmap)
-        x = config.states_rank_heatmap
-        # x = a['state'].unique()
-        z = []
-        for i in y:
-            row = np.ndarray.flatten(a.sort_values('state')[i].values)
-            z.append(row)
-
-        y = ['Dose 1 ', 'Dose 2 ']
-        fig = ff.create_annotated_heatmap(z,x=list(x),y=list(y), colorscale='pubu')
-
-        figs.append(fig)
-
-    subfig = make_subplots(rows=3, cols=1,
-                            subplot_titles=("since yesterday", "in the last week", "in the last 30 days"),
-                            vertical_spacing=0.1)
-    subfig.add_trace(figs[0].data[0],1,1)
-    subfig.add_trace(figs[1].data[0],2,1)
-    subfig.add_trace(figs[2].data[0],3,1)
-    annot0 = list(figs[0].layout.annotations)
-    annot1 = list(figs[1].layout.annotations)
-    annot2 = list(figs[2].layout.annotations)
-    for i in range(len(annot1)):
-        annot1[i]['xref'] = 'x2'
-        annot1[i]['yref'] = 'y2'
-    for i in range(len(annot2)):
-        annot2[i]['xref'] = 'x3'
-        annot2[i]['yref'] = 'y3'
-    subfig.update_layout(annotations=list(subfig['layout']['annotations'])+annot0+annot1+annot2)
-    subfig.update_layout(
-            title=dict(font=dict(size=18),
-                        text='% coverage growth of 16+ population',
-                        xanchor='center',
-                        yanchor='top',
-                        x=0.5,
-                        y=1,
-                ),
-            margin=dict(l=0,r=0,t=40,b=20),
-            # height=390 #260
-            )
-    # place the xlabel at the top of the table
-    subfig.update_xaxes(side='top')
-    subfig.update_yaxes(autorange='reversed')
-    subfig['layout']['yaxis']['domain'] = [0.7333,0.9333]
-    subfig['layout']['yaxis2']['domain'] = [0.3667,0.5667]
-    subfig['layout']['yaxis3']['domain'] = [0,0.2]
-    return subfig
-
 def heatmap_delta_data_dynamic(df, opt_ag, opt_aj, opt_as):
     a = compare.get_latest(df)
 
@@ -508,6 +389,11 @@ def heatmap_delta_data_dynamic(df, opt_ag, opt_aj, opt_as):
     figs = []
     for y in col_groups:
         x = a[xaxis].unique()
+
+        if xaxis == 'state':
+            a['state'] = pd.Categorical(a['state'], config.states_rank_heatmap)
+            x = config.states_rank_heatmap
+
         z = []
         for i in y:
             row = np.ndarray.flatten(a.sort_values(xaxis)[i].values)
@@ -534,10 +420,15 @@ def heatmap_delta_data_dynamic(df, opt_ag, opt_aj, opt_as):
         annot2[i]['xref'] = 'x3'
         annot2[i]['yref'] = 'y3'
     subfig.update_layout(annotations=list(subfig['layout']['annotations'])+annot0+annot1+annot2)
+
+    if opt_aj == '':
+        atext='% coverage growth of {}'.format(opt_ag)
+    else:
+        atext='% coverage growth of {} in {}'.format(opt_ag, opt_aj)
+
     subfig.update_layout(
             title=dict(font=dict(size=18),
-                        text='% coverage growth of {} in {}'.format(opt_ag,
-                                                                    opt_aj),
+                        text=atext,
                         xanchor='center',
                         yanchor='top',
                         x=0.5,
