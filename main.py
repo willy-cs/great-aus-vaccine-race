@@ -51,7 +51,8 @@ def main():
     list_states = config.states_rank
     list_age_group = list(sorted(overall_ag_df['age_group'].unique()))
     latest_date = df['date'].max().date().strftime('%d %b %Y')
-    latest_date = (df['date'].max() +datetime.timedelta(days=1)).date().strftime('%d %b %Y')
+    latest_date_published_dt = (df['date'].max() +datetime.timedelta(days=1)).date()
+    latest_date = latest_date_published_dt.strftime('%d %b %Y')
 
     st.markdown("#### Data is based on reports published on {}".format(latest_date))
     ############ MAIN CHARTS ####################
@@ -161,9 +162,22 @@ def main():
     ############ MAIN CHARTS ####################
 
     ############ HEATMAP CHARTS ##################
-    st.markdown('#### *Vaccination coverage using reports published on {}*'.format(latest_date))
-    heatmap_df = overall_state_df.query('age_group == "16_or_above"')
-    fig1, fig2 = chart.coverage_heatmap(sag_df, overall_state_df)
+    min_date_published_dt = (df['date'].min() +datetime.timedelta(days=1)).date()
+    col1, col2 = st.columns(2)
+    with col1:
+        chosen_date_dt = st.slider("To see previous vaccination coverage report, use time slider below: (warning, you may get missing values)",
+                                    value=latest_date_published_dt,
+                                    min_value=min_date_published_dt,
+                                    max_value=latest_date_published_dt)
+        actual_chosen_date_dt = chosen_date_dt - datetime.timedelta(days=1)
+        chosen_date = chosen_date_dt.strftime('%d %b %Y')
+
+    st.markdown('#### *Vaccination coverage using reports published on {}*'.format(chosen_date))
+
+    heatmap_sag_df = sag_df.query('date == @actual_chosen_date_dt')
+    heatmap_overall_state_df = overall_state_df.query('date == @actual_chosen_date_dt')
+    fig1, fig2 = chart.coverage_heatmap(heatmap_sag_df, heatmap_overall_state_df)
+    heatmap_df = overall_state_df.query('age_group == "16_or_above" & date == @actual_chosen_date_dt')
     fig3 = chart.heatmap_delta_data_dynamic(heatmap_df, "16+ population", "", "Jurisdictions")
     for (col, fig) in zip(st.columns(3), [fig1, fig2, fig3]):
         with col:

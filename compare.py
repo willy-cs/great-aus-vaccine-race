@@ -147,8 +147,10 @@ class User:
     def get(self, item):
         return getattr(self, item)
 
-def get_latest(df):
+def get_latest(df, spec_date=None):
     date_max = df['date'].max()
+    if spec_date != None:
+        date_max = spec_date
     return df.query('date == @date_max')
 
 def rank_columns(df):
