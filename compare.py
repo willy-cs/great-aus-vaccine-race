@@ -159,25 +159,32 @@ def rank_columns(df):
     df = sort_eta(df)
     df['eta_dose2_70_rank'] = df['eta_dose2_70_y'].rank(method='min', ascending=True).astype(int)
     df['eta_dose2_80_rank'] = df['eta_dose2_80_y'].rank(method='min', ascending=True).astype(int)
+    df['eta_dose2_95_rank'] = df['eta_dose2_95_y'].rank(method='min', ascending=True).astype(int)
     df.sort_values('vac_rate_rank', ascending=True, inplace=True)
     return df
 
 def sort_eta(c_df):
     reach_70=c_df[c_df['dose2_pct'] >= 70]['date'].min()
     reach_80=c_df[c_df['dose2_pct'] >= 80]['date'].min()
+    reach_95=c_df[c_df['dose2_pct'] >= 95]['date'].min()
 
     c_df['eta_dose2_70_y'] = ((c_df['date'] + pd.to_timedelta(c_df['eta_dose2_70'],unit='days')).dt.ceil(freq='D')).dt.date
     c_df['eta_dose2_80_y'] = ((c_df['date'] + pd.to_timedelta(c_df['eta_dose2_80'],unit='days')).dt.ceil(freq='D')).dt.date
+    c_df['eta_dose2_95_y'] = ((c_df['date'] + pd.to_timedelta(c_df['eta_dose2_95'],unit='days')).dt.ceil(freq='D')).dt.date
     c_df['eta_dose2_70_y'] = np.where(c_df['dose2_pct'] < 70, c_df['eta_dose2_70_y'], pd.to_datetime(reach_70))
     c_df['eta_dose2_80_y'] = np.where(c_df['dose2_pct'] < 80, c_df['eta_dose2_80_y'], pd.to_datetime(reach_80))
+    c_df['eta_dose2_95_y'] = np.where(c_df['dose2_pct'] < 95, c_df['eta_dose2_95_y'], pd.to_datetime(reach_95))
 
     reach_70_dose1=c_df[c_df['dose1_pct'] >= 70]['date'].min()
     reach_80_dose1=c_df[c_df['dose1_pct'] >= 80]['date'].min()
+    reach_95_dose1=c_df[c_df['dose1_pct'] >= 95]['date'].min()
 
     c_df['eta_dose1_70_y'] = ((c_df['date'] + pd.to_timedelta(c_df['eta_dose1_70'],unit='days')).dt.ceil(freq='D')).dt.date
     c_df['eta_dose1_80_y'] = ((c_df['date'] + pd.to_timedelta(c_df['eta_dose1_80'],unit='days')).dt.ceil(freq='D')).dt.date
+    c_df['eta_dose1_95_y'] = ((c_df['date'] + pd.to_timedelta(c_df['eta_dose1_95'],unit='days')).dt.ceil(freq='D')).dt.date
     c_df['eta_dose1_70_y'] = np.where(c_df['dose1_pct'] < 70, c_df['eta_dose1_70_y'], pd.to_datetime(reach_70_dose1))
     c_df['eta_dose1_80_y'] = np.where(c_df['dose1_pct'] < 80, c_df['eta_dose1_80_y'], pd.to_datetime(reach_80_dose1))
+    c_df['eta_dose1_95_y'] = np.where(c_df['dose1_pct'] < 95, c_df['eta_dose1_95_y'], pd.to_datetime(reach_95_dose1))
 
     return c_df
 
@@ -186,19 +193,24 @@ def construct_eta_data(df, group_col, user, dose='dose2'):
 
     eta_70_col = 'eta_' + dose +  '_70_y'
     eta_80_col = 'eta_' + dose +  '_80_y'
+    eta_95_col = 'eta_' + dose +  '_95_y'
 
-    cols=['date', group_col , eta_70_col, eta_80_col]
+    cols=['date', group_col , eta_70_col, eta_80_col, eta_95_col]
     eta_df = get_latest(df)
     eta_df = rank_columns(eta_df)
     eta_df = eta_df[cols].reset_index(drop=True).sort_values(group_col)
     eta_df = eta_df.sort_values(group_col)
     eta_df['annot_y'] = eta_df[group_col].reset_index(drop=True).index.astype(int)
 
-    eta_df.rename(columns = {eta_70_col : '70%', eta_80_col : '80%' }, inplace=True)
-    eta_df = pd.melt(eta_df, id_vars=['date', group_col, 'annot_y'], value_vars=['70%', '80%'],
+
+    eta_df.rename(columns = {eta_70_col : '70%', eta_80_col : '80%', eta_95_col : '95%' }, inplace=True)
+    eta_df = pd.melt(eta_df, id_vars=['date', group_col, 'annot_y'], value_vars=['70%', '80%', '95%'],
                         var_name='eta', value_name='est_target_date')
 
     eta_df['annot_x'] = eta_df['est_target_date'] - datetime.timedelta(days=3)
     eta_df.sort_values(['eta', group_col], ascending=[False, True], inplace=True)
+
+    if dose == 'dose2':
+        eta_df = eta_df.query("eta!= '95%'")
 
     return eta_df

@@ -202,6 +202,7 @@ def extra_calculation(a):
     # eta to hit double-vaxx at 70 and 80% rate using MA calculation
     a['eta_dose2_70'] = (0.7 * a['abspop_jun2020'] - a['dose2_cnt']) / a['ma7_dose2']
     a['eta_dose2_80'] = (0.8 * a['abspop_jun2020'] - a['dose2_cnt']) / a['ma7_dose2']
+    a['eta_dose2_95'] = (0.95 * a['abspop_jun2020'] - a['dose2_cnt']) / a['ma7_dose2']
 
 
     a['vac_rate_dose1'] = round(a['delta_dose1'] / a['abspop_jun2020'] * 100, 2)
@@ -214,6 +215,7 @@ def extra_calculation(a):
 
     a['eta_dose1_70'] = (0.7 * a['abspop_jun2020'] - a['dose1_cnt']) / a['ma7_dose1']
     a['eta_dose1_80'] = (0.8 * a['abspop_jun2020'] - a['dose1_cnt']) / a['ma7_dose1']
+    a['eta_dose1_95'] = (0.95 * a['abspop_jun2020'] - a['dose1_cnt']) / a['ma7_dose1']
 
     return a
 

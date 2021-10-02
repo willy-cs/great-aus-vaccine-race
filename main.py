@@ -196,7 +196,7 @@ def main():
     # if you want to be cheeky and link this to the radio button, you can just use eta_src = plotly_df
     eta_src = overall_state_df.query('age_group == "16_or_above"')
     with col1:
-        st.markdown("#### *Projected date to hit 70% and 80% first dose for 16+ population*")
+        st.markdown("#### *Projected date to hit 70%, 80%, and 95% first dose for 16+ population*")
         eta_df = compare.construct_eta_data(eta_src, 'state', user, dose='dose1')
         st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
                                         user=user,
