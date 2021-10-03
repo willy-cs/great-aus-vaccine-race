@@ -220,7 +220,7 @@ def extra_calculation(a):
     return a
 
 @st.cache(suppress_st_warning=True, ttl=300)
-def save_data(df):
+def process_data(df):
     overall_state_df = df[df['age_group'].str.endswith('_or_above')].copy(deep = True)
     overall_ag_df = df[~df['age_group'].str.endswith('_or_above')].copy(deep = True)
     sag_df = df[~df['age_group'].str.endswith('_or_above')].copy(deep = True)
@@ -248,6 +248,9 @@ def save_data(df):
     # sag_df.to_csv('sample_sag_df-20210926.csv', index=False)
 
     return (overall_state_df, overall_ag_df, sag_df)
+
+def save_data(df):
+    return process_data(df)
 
 @st.cache(suppress_st_warning=True, ttl=600)
 def update_data():

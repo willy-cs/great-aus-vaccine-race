@@ -47,7 +47,7 @@ def main():
     age_group_10_flag = True
     # age_group_10_flag = False
     df = data.age_grouping(df, age_group_10_flag)
-    (overall_state_df, overall_ag_df, sag_df) = data.save_data(df)
+    (overall_state_df, overall_ag_df, sag_df) = data.process_data(df)
     list_states = config.states_rank
     list_age_group = list(sorted(overall_ag_df['age_group'].unique()))
     latest_date = df['date'].max().date().strftime('%d %b %Y')
