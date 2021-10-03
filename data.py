@@ -23,7 +23,7 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 np.set_printoptions(suppress=True)
 
-@st.cache(suppress_st_warning=True, ttl=600)
+@st.cache(suppress_st_warning=True, ttl=300)
 def get_data():
     data_url = "https://vaccinedata.covid19nearme.com.au/data/air_residence.csv"
     df = pd.read_csv(data_url)
@@ -219,7 +219,7 @@ def extra_calculation(a):
 
     return a
 
-# @st.cache(suppress_st_warning=True, ttl=600)
+@st.cache(suppress_st_warning=True, ttl=300)
 def save_data(df):
     overall_state_df = df[df['age_group'].str.endswith('_or_above')].copy(deep = True)
     overall_ag_df = df[~df['age_group'].str.endswith('_or_above')].copy(deep = True)
@@ -243,9 +243,9 @@ def save_data(df):
     sag_df['dose2_pct'] = round(100 * sag_df['dose2_cnt']/ sag_df['abspop_jun2020'], 2)
     sag_df.sort_values(['date', 'state', 'age_group'], ascending=[True, True, True], inplace=True)
 
-    overall_state_df.to_csv('sample_overall_state_df-20210926.csv', index=False)
-    overall_ag_df.to_csv('sample_overall_ag_df-20210926.csv', index=False)
-    sag_df.to_csv('sample_sag_df-20210926.csv', index=False)
+    # overall_state_df.to_csv('sample_overall_state_df-20210926.csv', index=False)
+    # overall_ag_df.to_csv('sample_overall_ag_df-20210926.csv', index=False)
+    # sag_df.to_csv('sample_sag_df-20210926.csv', index=False)
 
     return (overall_state_df, overall_ag_df, sag_df)
 
