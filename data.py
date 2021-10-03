@@ -243,9 +243,9 @@ def save_data(df):
     sag_df['dose2_pct'] = round(100 * sag_df['dose2_cnt']/ sag_df['abspop_jun2020'], 2)
     sag_df.sort_values(['date', 'state', 'age_group'], ascending=[True, True, True], inplace=True)
 
-    overall_state_df.to_csv('sample_overall_state_df-20210926.csv', index=False)
-    overall_ag_df.to_csv('sample_overall_ag_df-20210926.csv', index=False)
-    sag_df.to_csv('sample_sag_df-20210926.csv', index=False)
+    # overall_state_df.to_csv('sample_overall_state_df-20210926.csv', index=False)
+    # overall_ag_df.to_csv('sample_overall_ag_df-20210926.csv', index=False)
+    # sag_df.to_csv('sample_sag_df-20210926.csv', index=False)
 
     return (overall_state_df, overall_ag_df, sag_df)
 
