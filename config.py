@@ -19,9 +19,13 @@ vac_rate_info = [['ma7_dose1_vac_rate', 'MA-7 vac growth rate', 'Dose 1 growth r
 vac_status_info = [['dose1_pct', 'coverage (%)', 'Dose 1 coverage'],
                     ['dose2_pct', 'coverage (%)', 'Dose 2 coverage']]
 
-vac_rawvol_info = [['delta_dose1', 'volume', 'Dose 1 volume'],
-                    ['delta_dose2', 'volume', 'Dose 2 volume'],
-                    ['delta_dose12', 'volume', 'Dose 1 + Dose 2 volume']]
+vac_rawvol_info = [['delta_dose1_mod', '# administered', 'Dose 1 administered'],
+                    ['delta_dose2_mod', '# administered', 'Dose 2 administered'],
+                    ['delta_dose12_mod', '# administered', 'Dose 1 + 2 administered']]
+
+vac_propvol_info = [['delta_dose1_prop', 'proportion (%)', 'Proportion of Dose 1 administered'],
+                    ['delta_dose2_prop', 'proportion (%)', 'Proportion of Dose 2 administered'],
+                    ['delta_dose12_prop', 'proportion (%)', 'Proportion of Dose 1 + 2 administered']]
 
 vac_volprop_info = [['1', 'proportion (%)', 'Doses proportion yesterday'],
                     ['7', 'proportion (%)', 'Doses proportion in the last 7 days'],
@@ -44,7 +48,8 @@ analysis_options={'Growth Rate' : vac_rate_info,
                    'Coverage' : vac_status_info,
                    'Dose 1 vs 2 Proportion' : vac_volprop_info,
                    'Growth Rate vs Coverage' : vac_rate_vs_coverage_info,
-                   # 'Volume' : vac_rawvol_info,
+                   'Dose administered *est*' : vac_rawvol_info,
+                   'Dose administered (proportion) *est*' : vac_propvol_info,
                     }
 
 

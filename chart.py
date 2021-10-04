@@ -514,10 +514,15 @@ def volume_chart(df, **kwargs):
         max_dose=df.groupby('date')['delta_dose12'].sum().reset_index()['delta_dose12'].max()\
                         * config.graph_max_scale
 
+    df['delta_dose1_prop'] = round(100 * df['delta_dose1_mod'] / df.groupby('date')['delta_dose1_mod'].transform(sum), 2)
+    df['delta_dose2_prop'] = round(100 * df['delta_dose2_mod'] / df.groupby('date')['delta_dose2_mod'].transform(sum), 2)
+    df['delta_dose12_prop'] = round(100 * df['delta_dose12_mod'] / df.groupby('date')['delta_dose12_mod'].transform(sum), 2)
+
+
     fig = px.bar(df, x='date', y=kwargs['y'], color=kwargs['color'],
                 category_orders={"state": config.states_rank, "age_group": config.ag_rank},
                 labels={'date':'date', kwargs['y']:kwargs['y_label']},
-                range_y=[0,max_dose],
+                # range_y=[0,max_dose],
                 color_discrete_sequence = px.colors.qualitative.Set1
         )
     fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
@@ -528,10 +533,16 @@ def volume_chart(df, **kwargs):
 
     layout_style(fig, **kwargs)
 
-    fig.update_traces(
-        hovertemplate='%{y:10,.0f}'+' %{hovertext}',
-        hovertext=['out of {:,.0f}'.format(i) for i in totals]
-    )
+    if kwargs['y_label'] == "# administered":
+        fig.update_traces(
+            hovertemplate='%{y:10,.0f}'+' %{hovertext}',
+            hovertext=['out of {:,.0f}'.format(i) for i in totals]
+        )
+    else:
+        fig.update_traces(
+            hovertemplate='%{y:.2f}%'+' %{hovertext}',
+            hovertext=['out of 100%'] * len(totals)
+        )
 
     return fig
 
@@ -638,6 +649,18 @@ def facet_chart(df, opt_aa, **kwargs):
     else:
         pxtype=px.line
 
+    if kwargs['facet'] == "state":
+        # If we're grouping by states, we want to exclude 'state == AUS'
+        df = df.query('state != "AUS"')
+    else:
+        # If we're grouping by age-group...
+        max_dose=df.groupby('date')['delta_dose12'].sum().reset_index()['delta_dose12'].max()\
+                        * config.graph_max_scale
+
+    df['delta_dose1_prop'] = round(100 * df['delta_dose1_mod'] / df.groupby('date')['delta_dose1_mod'].transform(sum), 2)
+    df['delta_dose2_prop'] = round(100 * df['delta_dose2_mod'] / df.groupby('date')['delta_dose2_mod'].transform(sum), 2)
+    df['delta_dose12_prop'] = round(100 * df['delta_dose12_mod'] / df.groupby('date')['delta_dose12_mod'].transform(sum), 2)
+
     fig=pxtype(df,
                 x='date',
                 y=kwargs['y'],
@@ -656,11 +679,14 @@ def facet_chart(df, opt_aa, **kwargs):
     legendnames = {'dose1_pct': 'dose1', 'dose2_pct': 'dose2',
                     'ma7_vac_rate' : 'dose1+dose2', 'ma7_dose1_vac_rate' : 'dose1',
                     'ma7_dose2_vac_rate' : 'dose2',
-                    'delta_dose1' : 'dose1',
-                    'delta_dose2' : 'dose2',
+                    'delta_dose1_mod' : 'dose1',
+                    'delta_dose2_mod' : 'dose2',
                     'delta_dose12_mod' : 'dose1+dose2',
                     'dose1_prop' : 'dose1',
                     'dose2_prop' : 'dose2',
+                    'delta_dose1_prop' : 'dose1',
+                    'delta_dose2_prop' : 'dose2',
+                    'delta_dose12_prop' : 'dose1+dose2',
             }
     fig.for_each_trace(lambda t: t.update(name = legendnames[t.name],
                                   legendgroup = legendnames[t.name],
@@ -696,7 +722,7 @@ def facet_chart(df, opt_aa, **kwargs):
 
     if kwargs['label_value'] == "coverage (%)":
         add_target_hline(fig)
-    elif kwargs['label_value'] == 'proportion (%)':
+    elif kwargs['label_value'] == 'proportion (%)' and opt_aa == 'Dose 1 vs 2 Proportion':
         add_target_hline_mid(fig)
 
     return fig
