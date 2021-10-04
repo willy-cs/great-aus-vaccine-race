@@ -163,16 +163,21 @@ def main():
 
     ############ HEATMAP CHARTS ##################
     min_date_published_dt = (df['date'].min() +datetime.timedelta(days=1)).date()
+
+    if 'chosen_date' not in st.session_state:
+        st.session_state.chosen_date = latest_date_published_dt
+    chosen_date_str = st.session_state.chosen_date.strftime('%d %b %Y')
+    st.markdown('#### *Vaccination coverage using reports published on {}*'.format(chosen_date_str))
     col1, col2 = st.columns(2)
     with col1:
         chosen_date_dt = st.slider("To see previous vaccination coverage report, use time slider below: (warning, you may get missing information)",
-                                    value=latest_date_published_dt,
+                                    # value=latest_date_published_dt,
                                     min_value=min_date_published_dt,
-                                    max_value=latest_date_published_dt)
+                                    max_value=latest_date_published_dt,
+                                    key='chosen_date')
+                                    # on_change=update_latest_date())
         actual_chosen_date_dt = chosen_date_dt - datetime.timedelta(days=1)
         chosen_date = chosen_date_dt.strftime('%d %b %Y')
-
-    st.markdown('#### *Vaccination coverage using reports published on {}*'.format(chosen_date))
 
     heatmap_sag_df = sag_df.query('date == @actual_chosen_date_dt')
     heatmap_overall_state_df = overall_state_df.query('date == @actual_chosen_date_dt')
@@ -244,6 +249,7 @@ def main():
     st.markdown('9. This page is optimised for wide screen. If you are viewing this on your phone, you might have better luck if you rotate it 90 degrees.')
     st.markdown('10. Feedback can be sent to [@ausvacrace](https://twitter.com/ausvacrace) on twitter.')
     st.markdown('11. Get jabbed! Check out vaccine availability from [COVID19 Near Me](https://covid19nearme.com.au), or [covid queue](https://covidqueue.com), or [vaccine.wfltaylor.com](https://vaccine.wfltaylor.com)')
+
 
 if __name__ == "__main__":
     main()
