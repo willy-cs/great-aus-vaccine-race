@@ -649,7 +649,7 @@ def facet_chart(df, opt_aa, **kwargs):
     else:
         pxtype=px.line
 
-    if kwargs['facet'] == "state":
+    if kwargs['facet'] == "state" and opt_aa in ['Dose administered *est*', 'Dose administered (proportion) *est*']:
         # If we're grouping by states, we want to exclude 'state == AUS'
         df = df.query('state != "AUS"')
     else:
