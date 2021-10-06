@@ -56,8 +56,8 @@ def main():
     figs = chart.coverage_heatmap(sag_df, overall_state_df, c='dose1_pct', headline_only=True)
     with col1:
         st.markdown('#### It is a race!')
-        st.markdown('#### ausvacrace.info')
-        st.markdown("#### Data is based on reports published on {}".format(latest_date))
+        st.markdown('##### ausvacrace.info')
+        st.markdown("##### Data is based on reports published on {}".format(latest_date))
     with col2:
         figs[0].update_layout(height=120)
         figs[0].update_layout(title=dict(font=dict(size=15)))
