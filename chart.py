@@ -593,6 +593,7 @@ def dose1v2_prop_chart(df, **kwargs):
     fig= px.bar(df_melted, x='proportion', y=kwargs['facet'], barmode='group',
                 color='dose',
                 text='prop',
+                labels={kwargs['facet']: '' },
                 range_x=[-range_max,range_max],
                 color_discrete_sequence = px.colors.qualitative.Dark2,
                 category_orders={"state": config.states_rank_heatmap, "age_group": config.ag_rank},
