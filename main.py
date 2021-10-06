@@ -40,8 +40,6 @@ st.markdown(f""" <style>
     </style> """, unsafe_allow_html=True)
 
 def main():
-    st.markdown('#### It is a race!')
-
     cached_df = data.get_data()
     df = cached_df.copy(deep = True)
     age_group_10_flag = True
@@ -54,7 +52,34 @@ def main():
     latest_date_published_dt = (df['date'].max() +datetime.timedelta(days=1)).date()
     latest_date = latest_date_published_dt.strftime('%d %b %Y')
 
-    st.markdown("#### Data is based on reports published on {}".format(latest_date))
+    col1, col2, col3, col4 = st.columns(4)
+    figs = chart.coverage_heatmap(sag_df, overall_state_df, c='dose1_pct', headline_only=True)
+    with col1:
+        st.markdown('#### It is a race!')
+        st.markdown('#### ausvacrace.info')
+        st.markdown("#### Data is based on reports published on {}".format(latest_date))
+    with col2:
+        figs[0].update_layout(height=120)
+        figs[0].update_layout(title=dict(font=dict(size=15)))
+        st.plotly_chart(figs[0], use_container_width=True,\
+                        config={'displayModeBar':False, 'staticPlot':True})
+    with col3:
+        figs[1].update_layout(height=120)
+        figs[1].update_layout(title=dict(font=dict(size=15)))
+        st.plotly_chart(figs[1], use_container_width=True,\
+                        config={'displayModeBar':False, 'staticPlot':True})
+    with col4:
+        actual_max_date = df['date'].max().date()
+        heatmap_df = overall_state_df.query('age_group == "16_or_above" & date == @actual_max_date')
+        fig = chart.heatmap_delta_data_dynamic(heatmap_df, "16+ population", "", "Jurisdictions",
+                                                headline_only=True)
+
+        fig.update_layout(height=120)
+        fig.update_layout(title=dict(font=dict(size=15)))
+        st.plotly_chart(fig, use_container_width=True,\
+                        config={'displayModeBar':False, 'staticPlot':True})
+
+
     ############ MAIN CHARTS ####################
     px_settings={'label_value':'',
                  'facet':'',

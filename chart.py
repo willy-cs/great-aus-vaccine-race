@@ -329,7 +329,7 @@ def add_custom_age_groups(l_df, total_12plus_df):
 
     return l_df
 
-def heatmap_delta_data_dynamic(df, opt_ag, opt_aj, opt_as):
+def heatmap_delta_data_dynamic(df, opt_ag, opt_aj, opt_as, headline_only=False):
     a = compare.get_latest(df)
 
     a['delta_dose1pp']=round(a['delta_dose1']/a['abspop_jun2020'] * 100, 2)
@@ -342,6 +342,9 @@ def heatmap_delta_data_dynamic(df, opt_ag, opt_aj, opt_as):
     col_groups = [ ['delta_dose1pp', 'delta_dose2pp'],
                     ['delta_dose1pp_7d', 'delta_dose2pp_7d'],
                     ['delta_dose1pp_30d', 'delta_dose2pp_30d'] ]
+
+    if headline_only:
+        col_groups = [ col_groups[0] ]
 
     xaxis = 'state' if opt_as == 'Jurisdictions' else 'age_group'
 
@@ -362,6 +365,22 @@ def heatmap_delta_data_dynamic(df, opt_ag, opt_aj, opt_as):
         fig = ff.create_annotated_heatmap(z,x=list(x),y=list(y), colorscale='pubu')
 
         figs.append(fig)
+
+    if headline_only:
+        fig.update_xaxes(side='top')
+        fig.update_yaxes(autorange='reversed')
+        fig.update_layout(
+            title=dict(font=dict(size=18),
+                        text='% coverage growth (16+) since yesterday',
+                        xanchor='center',
+                        yanchor='top',
+                        x=0.5,
+                        y=1,
+                    ),
+            margin=dict(l=0,r=0, t=40, b=20),
+        )
+
+        return fig
 
     subfig = make_subplots(rows=3, cols=1,
                             subplot_titles=("since yesterday", "in the last week", "in the last 30 days"),
@@ -404,7 +423,7 @@ def heatmap_delta_data_dynamic(df, opt_ag, opt_aj, opt_as):
     subfig['layout']['yaxis3']['domain'] = [0,0.2]
     return subfig
 
-def heatmap_data(sag_df, overall_state_df, col='dose1_pct'):
+def heatmap_data(sag_df, overall_state_df, col='dose1_pct', headline_only=False):
     sixteen_plus_df = overall_state_df.query('age_group == "16_or_above"')
     twelve_plus_df = overall_state_df.query('age_group == "12_or_above"')
 
@@ -425,6 +444,9 @@ def heatmap_data(sag_df, overall_state_df, col='dose1_pct'):
     l_df = l_df.sort_values(['state', 'age_group'])
 
     l_df['state'] = pd.Categorical(l_df['state'], config.states_rank_heatmap)
+    if headline_only:
+        l_df = l_df[l_df['age_group'].isin(['tot 12+', 'tot 16+', 'tot pop'])]
+
     x = config.states_rank_heatmap
     y = l_df['age_group'].unique()
     #z = [[state1, age_group1, state1_agegroup2...
@@ -437,7 +459,7 @@ def heatmap_data(sag_df, overall_state_df, col='dose1_pct'):
 
     return x, y, z
 
-def coverage_heatmap(sag_df, overall_state_df):
+def coverage_heatmap(sag_df, overall_state_df, c='dose1_pct', headline_only=False):
     """
     Need to prepare data for easy plotting
     """
@@ -445,7 +467,7 @@ def coverage_heatmap(sag_df, overall_state_df):
     figs = []
 
     for (c, _, title) in config.vac_status_info:
-        x, y, z = heatmap_data(sag_df, overall_state_df, col=c)
+        x, y, z = heatmap_data(sag_df, overall_state_df, col=c, headline_only=headline_only)
         # can try earth, or blues for colorscale
         fig = ff.create_annotated_heatmap(z,x=list(x),y=list(y), colorscale='pubu', zmin=0, zmax=100)
         # Hack of creating an illusion of an empty row between age groups and total populations
