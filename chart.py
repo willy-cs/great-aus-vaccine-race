@@ -747,7 +747,7 @@ def exp_facet_chart(df, opt_aa, **kwargs):
                 labels={'value': 'MA-7 vac growth rate', 'coverage' : 'coverage (%)'},
                 facet_col=kwargs['facet'],
                 facet_col_wrap=kwargs['facet_col_wrap'],
-                category_orders={"state": config.states_rank, "age_group": config.ag_rank},
+                # category_orders={"state": config.states_rank, "age_group": config.ag_rank},
                 color_discrete_sequence = px.colors.qualitative.Dark2,
                 )
 
