@@ -802,3 +802,73 @@ def exp_facet_chart(df, opt_aa, **kwargs):
         )
 
     return fig
+
+def gap_heatmap_data(sag_df, overall_state_df, col='dose1_pct'):
+    l_df = compare.get_latest(sag_df)
+    l_df = l_df.query('state != "AUS"')
+
+    states_rank_heatmap = ['ACT', 'NSW', 'VIC', 'TAS', 'SA', 'NT', 'QLD', 'WA']
+    # print(sorted(l_df['dose1_pct'])[-10:])
+    l_df[col] = np.where(l_df[col] >= 94.99, 95, l_df[col])
+
+    sixteen_plus_df = overall_state_df.query('age_group == "16_or_above"')
+    twelve_plus_df = overall_state_df.query('age_group == "12_or_above"')
+
+    states_df = compare.get_latest(sixteen_plus_df)
+    l_df = compare.get_latest(sag_df)
+
+    # This is for each age group coverage, for 16+
+    l_df = pd.concat([states_df, l_df])[['state', 'age_group', 'dose1_pct', 'dose2_pct']]
+    l_df['age_group'] = np.where(l_df['age_group'] == '16_or_above', 'tot 16+' ,l_df['age_group'])
+    l_df[col] = np.where(l_df[col] >= 94.99, 95, l_df[col])
+
+    # Adding the 12+ population
+    l_df = pd.concat([compare.get_latest(twelve_plus_df), l_df])[['state', 'age_group', 'dose1_pct', 'dose2_pct']]
+    l_df['age_group'] = np.where(l_df['age_group'] == '12_or_above', 'tot 12+' ,l_df['age_group'])
+
+    # adding the total population, using the dose counts from 12+ population
+    l_df = add_custom_age_groups(l_df, compare.get_latest(twelve_plus_df))
+    l_df = l_df.sort_values(['state', 'age_group'])
+    l_df = l_df.query('state != "AUS"')
+    l_df['dose1_pct'] = np.where(l_df['age_group'] == "empty row", np.nan, l_df['dose1_pct'])
+    l_df['dose2_pct'] = np.where(l_df['age_group'] == "empty row", np.nan, l_df['dose2_pct'])
+    ####
+
+    l_df['gap'] = l_df.groupby('age_group')[col].transform(lambda x: x.max() - x)
+
+    l_df['state'] = pd.Categorical(l_df['state'], states_rank_heatmap)
+    x = states_rank_heatmap
+    y = l_df['age_group'].unique()
+    #z = [[state1, age_group1, state1_agegroup2...
+    #     [state2]
+    z = []
+    for i in y:
+        # convert all values into a single decimal digit for better readibility
+        row = round(l_df.query('age_group==@i').sort_values('state')['gap'], 1).to_list()
+        z.append(row)
+
+    text_label = 'Dose 1 coverage gap'
+    if col=='dose2_pct':
+        text_label = 'Dose 2 coverage gap'
+
+    fig = ff.create_annotated_heatmap(z,x=list(x),y=list(y), colorscale='temps')
+    for i in fig.layout.annotations:
+        if i['y'] == "empty row":
+            i['text'] = ''
+    fig.data[0]['y'] = np.where(np.array(fig.data[0]['y']) == 'empty row', '', fig.data[0]['y'])
+    fig.update_yaxes(autorange='reversed')
+    fig.update_layout(
+            title=dict(font=dict(size=18),
+                        text=text_label,
+                        xanchor='center',
+                        yanchor='top',
+                        x=0.5,
+                        y=1,
+                    ),
+        margin=dict(l=0,r=0, t=40, b=20),
+    )
+        # No hover effect
+    fig.update_traces(hoverinfo='skip')
+
+    return fig
+

@@ -209,6 +209,18 @@ def main():
             st.plotly_chart(fig, use_container_width=True,\
                             config={'displayModeBar':False, 'staticPlot':True})
 
+    st.markdown('#### *Coverage gap (% point) to the best jurisdiction per age group, using reports published on {}*'.format(chosen_date_str))
+    st.write(' ')
+    fig1 = chart.gap_heatmap_data(heatmap_sag_df, heatmap_overall_state_df, col='dose1_pct')
+    fig2 = chart.gap_heatmap_data(heatmap_sag_df, heatmap_overall_state_df, col='dose2_pct')
+    # fig2 = chart.gap_heatmap_data(heatmap_sag_df,col='dose2_pct')
+    col1, col2, _ = st.columns(3)
+    with col1:
+        st.plotly_chart(fig1, use_container_width=True,\
+                        config={'displayModeBar':False, 'staticPlot':True})
+    with col2:
+        st.plotly_chart(fig2, use_container_width=True,\
+                        config={'displayModeBar':False, 'staticPlot':True})
     ########### DAILY VAC CHARTS ####################
     # st.markdown('### *Daily vaccination status*')
     # col1, col2, col3= st.columns(3)
