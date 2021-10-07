@@ -23,7 +23,7 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 np.set_printoptions(suppress=True)
 
-@st.cache(suppress_st_warning=True, ttl=300)
+# @st.cache(suppress_st_warning=True, ttl=300)
 def get_data():
     data_url = "https://vaccinedata.covid19nearme.com.au/data/air_residence.csv"
     df = pd.read_csv(data_url)
@@ -219,7 +219,7 @@ def extra_calculation(a):
 
     return a
 
-@st.cache(suppress_st_warning=True, ttl=300)
+# @st.cache(suppress_st_warning=True, ttl=300)
 def process_data(df):
     overall_state_df = df[df['age_group'].str.endswith('_or_above')].copy(deep = True)
     overall_ag_df = df[~df['age_group'].str.endswith('_or_above')].copy(deep = True)
@@ -252,7 +252,7 @@ def process_data(df):
 def save_data(df):
     return process_data(df)
 
-@st.cache(suppress_st_warning=True, ttl=600)
+# @st.cache(suppress_st_warning=True, ttl=600)
 def update_data():
     df = get_data()
     df = age_grouping(df)
@@ -274,6 +274,15 @@ def find_age_group(df, age):
     # default returning to the largest group
     return i
 
+
+@st.cache(suppress_st_warning=True, ttl=300)
+def processing_data():
+    # cache wrapper #
+    df = get_data()
+    age_group_10_flag = True
+    df = age_grouping(df, age_group_10_flag)
+    overall_state_df, overall_ag_df, sag_df = process_data(df)
+    return (df, overall_state_df, overall_ag_df, sag_df)
 
 if __name__ == '__main__':
     df = get_data()

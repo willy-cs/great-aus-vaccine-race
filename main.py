@@ -40,12 +40,7 @@ st.markdown(f""" <style>
     </style> """, unsafe_allow_html=True)
 
 def main():
-    cached_df = data.get_data()
-    df = cached_df.copy(deep = True)
-    age_group_10_flag = True
-    # age_group_10_flag = False
-    df = data.age_grouping(df, age_group_10_flag)
-    (overall_state_df, overall_ag_df, sag_df) = data.process_data(df)
+    (df, overall_state_df, overall_ag_df, sag_df) = data.processing_data()
     list_states = config.states_rank
     list_age_group = list(sorted(overall_ag_df['age_group'].unique()))
     latest_date = df['date'].max().date().strftime('%d %b %Y')
