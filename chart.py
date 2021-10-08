@@ -433,7 +433,7 @@ def heatmap_data(sag_df, overall_state_df, col='dose1_pct', headline_only=False)
     # This is for each age group coverage, for 16+
     l_df = pd.concat([states_df, l_df])[['state', 'age_group', 'dose1_pct', 'dose2_pct']]
     l_df['age_group'] = np.where(l_df['age_group'] == '16_or_above', 'tot 16+' ,l_df['age_group'])
-    l_df[col] = np.where(l_df[col] >= 94.99, 95, l_df[col])
+    # l_df[col] = np.where(l_df[col] >= 94.99, 95, l_df[col])
 
     # Adding the 12+ population
     l_df = pd.concat([compare.get_latest(twelve_plus_df), l_df])[['state', 'age_group', 'dose1_pct', 'dose2_pct']]
