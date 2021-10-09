@@ -243,7 +243,7 @@ def main():
     ############# ETA CHARTS ###############
     # Dummy user
     user=compare.User()
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     # if you want to be cheeky and link this to the radio button, you can just use eta_src = plotly_df
     eta_src = overall_state_df.query('age_group == "16_or_above"')
     with col1:
@@ -265,22 +265,28 @@ def main():
                                         annot=True),
                                         use_container_width=True,
                                         config={'displayModeBar':False, 'staticPlot':True})
+    with col3:
+        st.markdown('#### Our rule of thumb to estimate double dose target:')
+        st.markdown('1. If a jurisdiction has reached 70/80% 1st dose target, calculate two numbers. First, take the 70/80% 1st dose date plus whatever the prevalent Pfizer interval on that jurisdiction plus 1 week. Second, look at the projected date to hit 70/80% using 7-day MA 2nd dose rate. Take the earlier date of the two.')
+        st.markdown('2. If a jurisdiction has not reached 70/80% 1st dose target, then you may use the estimate for that jurisdiction to hit 70/80% 1st dose target, and then add the whatever the prevalent Pfizer interval for that jurisdiction plus 1 week to estimate 70/80% double dose target dates. Once the 1st dose targets have been achieved, switch to rule #1.')
+        st.markdown('3. The two rules above should give you a reasonable estimate for double dose target, subject to changes in government policy, Pfizer dose interval, weather, long weekend, public holidays, etc.')
+        st.markdown('4. Our projected dates are based on 7-day moving average rate for each dose, and updated daily. We did not implement the proposed method above.')
+
 
     ############# ETA CHARTS ###############
 
 
     st.subheader('Notes')
-    st.markdown('1. Projection on reaching 70 or 80% target is based on 7-day moving average rate of each dose. This will be updated daily.')
-    st.markdown('2. My source data is from https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf, extracted from [WA Health](https://www.wa.gov.au/sites/default/files/2021-06/COVID-19-Vaccination-Dashboard-Guide-for-Interpretation.pdf) (second dose by state data prior to 1st July 2021) and [Department of Health](https://www.health.gov.au/using-our-websites/copyright) (all other data) by [Ken Tsang](https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf). I might have modified the data to correct any mistakes or errors I perceive or notice.')
-    st.markdown('3. This page does not aim or claim to be authoritative of vaccine data roll out. I do not guarantee its accuracy. Use at your own risk, and I take no responsibility of any loss that might have occurred.')
-    st.markdown('4. The numbers for dose administered in this site should be use as a guidance (spotting the trend if you like), rather than the actual number. Interpret the data carefully. Some numbers have been estimated from population data as AUS government did not provide the administered numbers to that level (especially to state and age group combo). There is also this issue as pointed by [Ken on twitter](https://twitter.com/jxeeno/status/1438495304194555907). *USE AT YOUR OWN RISK -- YOU HAVE BEEN WARNED*.')
-    st.markdown('5. I built this page for my own purpose. Sorry if it does not meet your expectations.')
-    st.markdown('6. This page is hosted on a free server. Please excuse its sluggishness.')
-    st.markdown('7. This page is always going to be under development.')
-    st.markdown('8. If you find this page useful, feel free to share it.')
-    st.markdown('9. This page is optimised for wide screen. If you are viewing this on your phone, you might have better luck if you rotate it 90 degrees.')
-    st.markdown('10. Feedback can be sent to [@ausvacrace](https://twitter.com/ausvacrace) on twitter.')
-    st.markdown('11. Get jabbed! Check out vaccine availability from [COVID19 Near Me](https://covid19nearme.com.au), or [covid queue](https://covidqueue.com), or [vaccine.wfltaylor.com](https://vaccine.wfltaylor.com)')
+    st.markdown('1. My source data is from https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf, extracted from [WA Health](https://www.wa.gov.au/sites/default/files/2021-06/COVID-19-Vaccination-Dashboard-Guide-for-Interpretation.pdf) (second dose by state data prior to 1st July 2021) and [Department of Health](https://www.health.gov.au/using-our-websites/copyright) (all other data) by [Ken Tsang](https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf). I might have modified the data to correct any mistakes or errors I perceive or notice.')
+    st.markdown('2. This page does not aim or claim to be authoritative of vaccine data roll out. I do not guarantee its accuracy. Use at your own risk, and I take no responsibility of any loss that might have occurred.')
+    st.markdown('3. The numbers for dose administered in this site should be use as a guidance (spotting the trend if you like), rather than the actual number. Interpret the data carefully. Some numbers have been estimated from population data as AUS government did not provide the administered numbers to that level (especially to state and age group combo). There is also this issue as pointed by [Ken on twitter](https://twitter.com/jxeeno/status/1438495304194555907). *USE AT YOUR OWN RISK -- YOU HAVE BEEN WARNED*.')
+    st.markdown('4. I built this page for my own purpose. Sorry if it does not meet your expectations.')
+    st.markdown('5. This page is hosted on a free server. Please excuse its sluggishness.')
+    st.markdown('6. This page is always going to be under development.')
+    st.markdown('7. If you find this page useful, feel free to share it.')
+    st.markdown('8. This page is optimised for wide screen. If you are viewing this on your phone, you might have better luck if you rotate it 90 degrees.')
+    st.markdown('9. Feedback can be sent to [@ausvacrace](https://twitter.com/ausvacrace) on twitter.')
+    st.markdown('10. Get jabbed! Check out vaccine availability from [COVID19 Near Me](https://covid19nearme.com.au), or [covid queue](https://covidqueue.com), or [vaccine.wfltaylor.com](https://vaccine.wfltaylor.com)')
 
 
 if __name__ == "__main__":
