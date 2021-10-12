@@ -267,13 +267,13 @@ def main():
                                         config={'displayModeBar':False, 'staticPlot':True})
     with col3:
         st.markdown('#### Our rule of thumb to estimate double dose target:')
-        st.markdown('1. If a jurisdiction has reached 70/80% 1st dose target, calculate two numbers. First, take the 70/80% 1st dose date plus whatever the prevalent Pfizer interval on that jurisdiction plus 1 week. Second, look at the projected date to hit 70/80% using 7-day MA 2nd dose rate. Take the earlier date of the two.')
+        st.markdown('1. If a jurisdiction has reached 70/80% 1st dose target, calculate two numbers. First, take the 70/80% 1st dose date plus whatever the prevalent Pfizer interval for that jurisdiction plus 1 week. Second, look at the projected date to hit 70/80% using 7-day MA 2nd dose rate. Take the earlier date of the two.')
         st.markdown('2. If a jurisdiction has not reached 70/80% 1st dose target, then you may use the estimate for that jurisdiction to hit 70/80% 1st dose target, and then add the whatever the prevalent Pfizer interval for that jurisdiction plus 1 week to estimate 70/80% double dose target dates. Once the 1st dose targets have been achieved, switch to rule #1.')
         st.markdown('3. The two rules above should give you a reasonable estimate for double dose target, subject to changes in government policy, Pfizer dose interval, weather, long weekend, public holidays, etc.')
         st.markdown('4. Our projected dates are based on 7-day moving average rate for each dose, and updated daily. We did not implement the proposed method above.')
 
 
-    st.markdown("#### Vaccination milestone")
+    st.markdown("#### Vaccination milestone for 16+")
     col1, col2, col3 = st.columns(3)
     with col1:
         # print(milestone_df)

@@ -895,7 +895,8 @@ def vaccine_milestone_chart(df):
             custom_data=['text_label', 'state'],
             height=600
             )
-    kwargs = {'graph_title' : 'Vaccination Milestone 16+ population'}
+    # kwargs = {'graph_title' : 'Vaccination Milestone 16+ population'}
+    kwargs = {'graph_title' : ''}
     layout_style(fig, **kwargs)
     fig.update_layout(legend_title_text='',
                       legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="center", x=0.5),
