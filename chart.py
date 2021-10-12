@@ -485,7 +485,7 @@ def coverage_heatmap(sag_df, overall_state_df, c='dose1_pct', headline_only=Fals
                         x=0.5,
                         y=1,
                     ),
-        margin=dict(l=0,r=0, t=40, b=20),
+            margin=dict(l=0,r=0, t=40, b=20),
     )
         # No hover effect
         fig.update_traces(hoverinfo='skip')
@@ -872,3 +872,52 @@ def gap_heatmap_data(sag_df, overall_state_df, col='dose1_pct'):
 
     return fig
 
+
+def vaccine_milestone_chart(df):
+    df['dose']=pd.Categorical(df['dose'])
+    df.sort_values('date', inplace=True)
+    df=df.reset_index(drop=True)
+    ps = list(df['plot_size'])
+
+    fig = px.scatter(df, x='state', y='date',
+            color='dose',
+            size=ps,
+            # size='plot_size',
+            text='milestone',
+            color_discrete_sequence = px.colors.qualitative.Dark2,
+            category_orders={'state': config.states_rank_heatmap},
+            size_max=10,
+            # hover_data={'dose':False,
+            #             'target':True,
+            #             'target_rel':False,
+            #             'date':False
+            #             },
+            custom_data=['text_label', 'state'],
+            height=600
+            )
+    kwargs = {'graph_title' : 'Vaccination Milestone 16+ population'}
+    layout_style(fig, **kwargs)
+    fig.update_layout(legend_title_text='',
+                      legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="center", x=0.5),
+                      margin=dict(l=0,r=0, t=50, b=20),
+                      hovermode=None,
+                      xaxis_title=None,
+                      yaxis_title=None,
+                    )
+    fig.update_traces(textposition='middle right')
+    fig['data'][0]['textposition'] = 'middle left'
+
+    # remove the text label from legend symbol
+    def add_trace_copy(trace):
+        fig.add_traces(trace)
+        new_trace = fig.data[-1]
+        # new_trace.update(mode="text", showlegend=False)
+        new_trace.update(showlegend=False)
+        trace.update(mode="markers")
+    fig.for_each_trace(add_trace_copy)
+
+    fig.update_yaxes(tickangle=-90)
+    fig.update_traces(marker_symbol='circle-open', selector=dict(type='scatter'))
+    fig.update_traces(hovertemplate='%{customdata[1]}<br>%{customdata[0]}')
+
+    return fig
