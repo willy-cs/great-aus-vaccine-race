@@ -40,7 +40,7 @@ st.markdown(f""" <style>
     </style> """, unsafe_allow_html=True)
 
 def main():
-    (df, overall_state_df, overall_ag_df, sag_df) = data.processing_data()
+    (df, overall_state_df, overall_ag_df, sag_df, milestone_df) = data.processing_data()
     list_states = config.states_rank
     list_age_group = list(sorted(overall_ag_df['age_group'].unique()))
     latest_date = df['date'].max().date().strftime('%d %b %Y')
@@ -273,11 +273,18 @@ def main():
         st.markdown('4. Our projected dates are based on 7-day moving average rate for each dose, and updated daily. We did not implement the proposed method above.')
 
 
+    st.markdown("#### Vaccination milestone")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        # print(milestone_df)
+        fig = chart.vaccine_milestone_chart(milestone_df)
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar':False})
+
     ############# ETA CHARTS ###############
 
 
     st.subheader('Notes')
-    st.markdown('1. My source data is from https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf, extracted from [WA Health](https://www.wa.gov.au/sites/default/files/2021-06/COVID-19-Vaccination-Dashboard-Guide-for-Interpretation.pdf) (second dose by state data prior to 1st July 2021) and [Department of Health](https://www.health.gov.au/using-our-websites/copyright) (all other data) by [Ken Tsang](https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf). I might have modified the data to correct any mistakes or errors I perceive or notice.')
+    st.markdown('1. My source data is from https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf, extracted from [WA Health](https://www.wa.gov.au/sites/default/files/2021-06/COVID-19-Vaccination-Dashboard-Guide-for-Interpretation.pdf) (second dose by state data prior to 1st July 2021) and [Department of Health](https://www.health.gov.au/using-our-websites/copyright) (all other data) by [Ken Tsang](https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf). I might have modified the data to correct any mistakes or errors I perceive or notice. Population data is from [ABS](https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population/sep-2020/31010do002_202009.xls).')
     st.markdown('2. This page does not aim or claim to be authoritative of vaccine data roll out. I do not guarantee its accuracy. Use at your own risk, and I take no responsibility of any loss that might have occurred.')
     st.markdown('3. The numbers for dose administered in this site should be use as a guidance (spotting the trend if you like), rather than the actual number. Interpret the data carefully. Some numbers have been estimated from population data as AUS government did not provide the administered numbers to that level (especially to state and age group combo). There is also this issue as pointed by [Ken on twitter](https://twitter.com/jxeeno/status/1438495304194555907). *USE AT YOUR OWN RISK -- YOU HAVE BEEN WARNED*.')
     st.markdown('4. I built this page for my own purpose. Sorry if it does not meet your expectations.')

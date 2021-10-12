@@ -247,7 +247,8 @@ def process_data(df):
     # overall_ag_df.to_csv('sample_overall_ag_df-20210926.csv', index=False)
     # sag_df.to_csv('sample_sag_df-20210926.csv', index=False)
 
-    return (overall_state_df, overall_ag_df, sag_df)
+    milestone_df=get_major_milestone_data(overall_state_df)
+    return (overall_state_df, overall_ag_df, sag_df, milestone_df)
 
 def save_data(df):
     return process_data(df)
@@ -275,17 +276,65 @@ def find_age_group(df, age):
     return i
 
 
+#
+# overall_state_df
+def get_major_milestone_data(df):
+    list_states = config.states_rank
+    major_milestones = [40, 50, 60, 70, 80, 90]
+    plot_size =        [1, 1.5,  2,  3,  4,  5]
+    cols = ['state', 'age_group', 'date', 'dose', 'milestone', 'text_label', 'plot_size']
+
+    output_df = pd.DataFrame(columns=cols)
+
+    for state in list_states:
+        for (m, ps) in zip(major_milestones, plot_size):
+            for d in ['dose1_pct', 'dose2_pct']:
+                row = dict()
+                row['state'] = state
+                row['age_group'] = '16+'
+                row['date'] = find_first(df, state, m, col=d, ag='16_or_above')
+                if pd.isnull(row['date']):
+                    continue
+                row['dose'] =  'dose 1' if d == 'dose1_pct' else 'dose 2'
+                row['milestone'] = m
+                # if m == 95:
+                #     row['milestone'] = '🏁 95'
+                row['text_label'] = str(m)+'%💉' if d == 'dose1_pct' else str(m) + '%💉💉'
+                row['text_label'] = row['text_label'] + '<br>'+str(row['date'].strftime('%d %b'))
+                row['plot_size'] = ps
+                output_df = output_df.append(row, ignore_index=True)
+
+    return output_df
+
+
+def find_first(df, state, target, col='dose1_pct', ag='16_or_above'):
+    date = None
+    try:
+        # check if the first entry is the one after the target
+        if df[(df['state'] == state) & (df[col] < target) & (df['age_group'] == ag)].shape[0] == 0:
+            date = None
+            return date
+
+        date = df[(df['state'] == state) & (df[col] > target) & (df['age_group'] == ag)]['date'].min().date()
+    except:
+        date = None
+
+    return date
+
+
 @st.cache(suppress_st_warning=True, ttl=300)
 def processing_data():
     # cache wrapper #
     df = get_data()
     age_group_10_flag = True
     df = age_grouping(df, age_group_10_flag)
-    overall_state_df, overall_ag_df, sag_df = process_data(df)
-    return (df, overall_state_df, overall_ag_df, sag_df)
+    overall_state_df, overall_ag_df, sag_df, milestone_df = process_data(df)
+    # milestone_df=get_major_milestone_data(overall_state_df)
+    return (df, overall_state_df, overall_ag_df, sag_df, milestone_df)
+
 
 if __name__ == '__main__':
     df = get_data()
     aus_df=get_national_data()
     adf = age_grouping(df, True)
-    a,b,c = save_data(adf)
+    a,b,c,d = save_data(adf)
