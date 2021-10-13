@@ -879,12 +879,16 @@ def vaccine_milestone_chart(df):
     df=df.reset_index(drop=True)
     ps = list(df['plot_size'])
 
+    sequence = px.colors.qualitative.Dark2
+    if (df['dose'].unique()[0] == "dose 2"):
+        sequence = px.colors.qualitative.Dark2[1:]
+
     fig = px.scatter(df, x='state', y='date',
             color='dose',
             size=ps,
             # size='plot_size',
             text='milestone',
-            color_discrete_sequence = px.colors.qualitative.Dark2,
+            color_discrete_sequence = sequence,
             category_orders={'state': config.states_rank_heatmap},
             size_max=10,
             # hover_data={'dose':False,

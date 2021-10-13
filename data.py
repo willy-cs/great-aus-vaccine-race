@@ -280,8 +280,8 @@ def find_age_group(df, age):
 # overall_state_df
 def get_major_milestone_data(df):
     list_states = config.states_rank
-    major_milestones = [40, 50, 60, 70, 80, 90]
-    plot_size =        [1, 1.5,  2,  3,  4,  5]
+    major_milestones = [40, 50, 60, 70, 80, 90, 95]
+    plot_size =        [1, 1.5,  2,  3,  4,  5, 5.5]
     cols = ['state', 'age_group', 'date', 'dose', 'milestone', 'text_label', 'plot_size']
 
     output_df = pd.DataFrame(columns=cols)

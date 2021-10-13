@@ -276,7 +276,12 @@ def main():
     st.markdown("#### Vaccination milestone for 16+")
     col1, col2, col3 = st.columns(3)
     with col1:
-        # print(milestone_df)
+        fig = chart.vaccine_milestone_chart(milestone_df.query('dose == "dose 1"'))
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar':False})
+    with col2:
+        fig = chart.vaccine_milestone_chart(milestone_df.query('dose == "dose 2"'))
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar':False})
+    with col3:
         fig = chart.vaccine_milestone_chart(milestone_df)
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar':False})
 
