@@ -83,7 +83,7 @@ def main():
             }
     figs =[]
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
     extra_query = ''
     with col1:
         opt_aa=st.radio('Show me charts of COVID-19 vaccination', list(config.analysis_options.keys()))
@@ -132,6 +132,8 @@ def main():
             px_settings['facet'] = px_settings['color'] = 'age_group'
             px_settings['facet_col_wrap'] = 9
     with col5:
+        opt_autoscale = st.radio('Graph y-axis auto-scale?', ['on', 'off'])
+    with col6:
         select_options={'group' : opt_as[:-1].lower(),
                         'measure' : opt_aa.lower()
                         }
@@ -159,11 +161,14 @@ def main():
             for px_info in config.analysis_options[opt_aa]:
                 (px_settings['y'], px_settings['y_label'], px_settings['graph_title']) = px_info
                 if opt_aa in ['Dose administered *est*', 'Dose administered (proportion) *est*']:
+                    px_settings['opt_autoscale'] = opt_autoscale
+                    px_settings['opt_aa'] = opt_aa
                     fig=chart.volume_chart(plotly_df, **px_settings)
                 elif opt_aa in ['Dose 1 vs 2 Proportion']:
                     fig=chart.dose1v2_prop_chart(plotly_df, **px_settings)
                 else:
                     px_settings['opt_aa'] = opt_aa
+                    px_settings['opt_autoscale'] = opt_autoscale
                     fig=chart.line_chart(plotly_df, **px_settings)
                 figs.append(fig)
             if opt_aa == "Coverage":

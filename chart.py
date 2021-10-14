@@ -145,27 +145,41 @@ def line_chart(df, **kwargs):
         (x, y) = kwargs['y']
         x_label, y_label = kwargs['y_label']
         markers=True
+        if kwargs['opt_autoscale'] == "off":
+            columns = [i[0][1] for i in config.analysis_options[kwargs['opt_aa']]]
+            # columns.pop()
+            min_y = min(df[columns].min())
+            max_y = max(df[columns].max())
+            kwargs['range_y'] = [0 , max_y * 1.1]
+
         for i in latest_df[grouping].unique():
             ann.append(
                     {'x': latest_df[latest_df[grouping] == i][x].max() + 1,
                     'y': latest_df[latest_df[grouping] == i][y].max(),
-                    'text': i,
-                    'showarrow': False
-                    }
+                    'text': i, 'showarrow': False }
             )
     else:
         x = x_label = 'date'
         y = kwargs['y']
         y_label = kwargs['y_label']
         markers=False
+        if kwargs['opt_autoscale'] == "off":
+            columns = [i[0] for i in config.analysis_options[kwargs['opt_aa']]]
+            columns.pop()
+            min_y = min(df[columns].min())
+            max_y = max(df[columns].max())
+            kwargs['range_y'] = [0 , max_y * 1.1]
+
         for i in latest_df[grouping].unique():
             ann.append(
                     {'x': df[x].max() + datetime.timedelta(days=2),
                     'y': latest_df[latest_df[grouping] == i][y].max(),
-                    'text': i,
-                    'showarrow': False
-                    }
+                    'text': i, 'showarrow': False }
             )
+
+    if y in ['ma7_vac_rate']:
+        max_y = df[y].max()
+        kwargs['range_y'] = [0, max_y * 1.1]
 
     fig = px.line(df, x=x, y=y, color=kwargs['color'],
                 category_orders={"state": config.states_rank, "age_group": config.ag_rank},
@@ -536,15 +550,24 @@ def volume_chart(df, **kwargs):
         max_dose=df.groupby('date')['delta_dose12'].sum().reset_index()['delta_dose12'].max()\
                         * config.graph_max_scale
 
+    if kwargs['opt_autoscale'] == "off":
+        columns = [i[0] for i in config.analysis_options[kwargs['opt_aa']]]
+        columns.pop()
+        max_y = max(df.groupby('date')[columns].sum().max())
+        kwargs['range_y'] = [0 , max_y * 1.1]
+
     df['delta_dose1_prop'] = round(100 * df['delta_dose1_mod'] / df.groupby('date')['delta_dose1_mod'].transform(sum), 2)
     df['delta_dose2_prop'] = round(100 * df['delta_dose2_mod'] / df.groupby('date')['delta_dose2_mod'].transform(sum), 2)
     df['delta_dose12_prop'] = round(100 * df['delta_dose12_mod'] / df.groupby('date')['delta_dose12_mod'].transform(sum), 2)
 
+    if kwargs['y'] in ['delta_dose12_mod']:
+        max_y = max(df.groupby('date')[kwargs['y']].sum())
+        kwargs['range_y'] = [0, max_y * 1.1]
 
     fig = px.bar(df, x='date', y=kwargs['y'], color=kwargs['color'],
                 category_orders={"state": config.states_rank, "age_group": config.ag_rank},
                 labels={'date':'date', kwargs['y']:kwargs['y_label']},
-                # range_y=[0,max_dose],
+                range_y=kwargs['range_y'],
                 color_discrete_sequence = px.colors.qualitative.Set1
         )
     fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
