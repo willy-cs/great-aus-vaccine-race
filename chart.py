@@ -177,7 +177,7 @@ def line_chart(df, **kwargs):
                     'text': i, 'showarrow': False }
             )
 
-    if y in ['ma7_vac_rate']:
+    if y in ['ma7_vac_rate'] and kwargs['opt_autoscale'] == 'off':
         max_y = df[y].max()
         kwargs['range_y'] = [0, max_y * 1.1]
 
