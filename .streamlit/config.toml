@@ -1,5 +1,2 @@
-[global]
-metrics=true
-
 [server]
 headless=true
