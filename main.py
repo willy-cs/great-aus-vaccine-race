@@ -281,11 +281,11 @@ def main():
         st.table(final.assign(hack='').set_index('hack'))
 
     with col3:
-        st.markdown('#### Our methods to estimate vaccine milestone:')
+        st.markdown('#### Our methods of estimating vaccine milestone dates:')
         st.markdown('1. For 1st dose targets, we use 7-day MA of 1st dose rate.')
-        st.markdown('2. For 2nd dose targets, we calculate two dates: a) 7-day MA of 2nd dose rate, and b) "follow 1st dose" days. The idea with b) is that we assume the time taken to get from a given coverage level to any target in 1st dose is the same for 2nd dose. For example, if a state is currently at 63.7% 2nd dose and we want to estimate how long it will take to reach 80%, we will look at how long does it take for that state to get from 63.7% to 80% 1st dose. We will then use this interval as an estimate for 2nd dose.')
-        st.markdown('3. Should the jurisdiction has not reached the 1st dose target, then we estimate when the jurisdiction will get to that target using 7-day MA of 1st dose rate.')
-        st.markdown('4. We present both these numbers together. If they differ, we assume that the actual date of reaching the target will be somewhere between the two dates.')
+        st.markdown('2. For 2nd dose targets, we calculate two dates: a) 7-day MA of 2nd dose rate, and b) "follow 1st dose" date. The idea with b) is that we assume the time taken to get from a given coverage level to any target in 1st dose is the same for 2nd dose. For example, if a state is currently at 63.7% 2nd dose and we want to estimate how long it will take to reach 80% 2nd dose, we will look at how long it took for that state to get from 63.7% to 80% 1st dose. We will then use this interval as an estimate for 2nd dose.')
+        st.markdown('3. Should the jurisdiction has not reached the 1st dose target, then we estimate when the jurisdiction will get to that target using 7-day MA of 1st dose rate when calculating "follow 1st dose" date.')
+        st.markdown('4. We present both these dates together. If they differ, we assume that the actual date of reaching the target will be somewhere between the two dates.')
         st.markdown('5. The rule of thumb is that if the vaccination growth rate is picking up, then it will be closer to the 7-day MA dates. Conversely, if the vaccination growth rate is slowing down, then it will be closer to the "follow 1st dose" date.')
         st.markdown('6. The chequered flag 🏁 indicates that the target has been reached.')
         st.markdown('7. No approach is perfect -- our estimate is dynamic and will be updated daily. However, by giving an interval of dates, we hope that viewers will appreciate the difficulty in predicting the future. We do expect the interval between two dates will shrink as we get closer to the target.')
