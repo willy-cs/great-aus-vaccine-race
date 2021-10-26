@@ -248,35 +248,47 @@ def main():
     ############# ETA CHARTS ###############
     # Dummy user
     user=compare.User()
-    col1, col2, col3 = st.columns(3)
-    # if you want to be cheeky and link this to the radio button, you can just use eta_src = plotly_df
+    st.markdown("#### *Estimated dates to hit vaccine milestones*")
+    opt_eta=st.radio('', ['16+'] + ['12+'])
     eta_src = overall_state_df.query('age_group == "16_or_above"')
+    if opt_eta == "12+":
+        eta_src = overall_state_df.query('age_group == "12_or_above"')
+    col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown("#### *Projected date to hit 70%, 80%, and 95% first dose for 16+ population*")
-        eta_df = compare.construct_eta_data(eta_src, 'state', user, dose='dose1')
-        st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
-                                        user=user,
-                                        hl=False,
-                                        annot=True),
-                                        use_container_width=True,
-                                        config={'displayModeBar':False, 'staticPlot':True})
+        st.markdown('#### *1st dose*')
+        res_df=pd.DataFrame()
+        for t in [70, 80, 90, 95]:
+            temp_0=eta_src.groupby('state').apply(data.predict_target_date_1stdose, t=t).reset_index().rename(columns= {0: "est_date"})
+            temp_0['target'] = 'target-' + str(t)
+            res_df = pd.concat([res_df, temp_0])
+
+        final=pd.pivot(res_df, index='state', columns=['target'], values='est_date').reset_index()
+        final['state']=pd.Categorical(final['state'], config.states_rank_heatmap)
+        final=final.sort_values('state')
+        st.table(final.assign(hack='').set_index('hack'))
 
     with col2:
-        st.markdown("#### *Projected date to hit 70% and 80% double dose for 16+ population*")
-        eta_df = compare.construct_eta_data(eta_src, 'state', user)
-        st.plotly_chart(chart.eta_chart(eta_df, group_col='state',
-                                        user=user,
-                                        hl=False,
-                                        annot=True),
-                                        use_container_width=True,
-                                        config={'displayModeBar':False, 'staticPlot':True})
-    with col3:
-        st.markdown('#### Our rule of thumb to estimate double dose target:')
-        st.markdown('1. If a jurisdiction has reached 70/80% 1st dose target, calculate two numbers. First, take the 70/80% 1st dose date plus whatever the prevalent Pfizer interval for that jurisdiction plus 1 week. Second, look at the projected date to hit 70/80% using 7-day MA 2nd dose rate. Take the earlier date of the two.')
-        st.markdown('2. If a jurisdiction has not reached 70/80% 1st dose target, then you may use the estimate for that jurisdiction to hit 70/80% 1st dose target, and then add the whatever the prevalent Pfizer interval for that jurisdiction plus 1 week to estimate 70/80% double dose target dates. Once the 1st dose targets have been achieved, switch to rule #1.')
-        st.markdown('3. The two rules above should give you a reasonable estimate for double dose target, subject to changes in government policy, Pfizer dose interval, weather, long weekend, public holidays, etc.')
-        st.markdown('4. Our projected dates are based on 7-day moving average rate for each dose, and updated daily. We did not implement the proposed method above.')
+        st.markdown('#### *2nd dose*')
+        res_df=pd.DataFrame()
+        for t in [70, 80, 90, 95]:
+            temp_0=eta_src.groupby('state').apply(data.predict_target_date, t=t).reset_index().rename(columns= {0: "est_date"})
+            temp_0['target'] = 'target-' + str(t)
+            res_df = pd.concat([res_df, temp_0])
 
+        final=pd.pivot(res_df, index='state', columns=['target'], values='est_date').reset_index()
+        final['state']=pd.Categorical(final['state'], config.states_rank_heatmap)
+        final=final.sort_values('state')
+        st.table(final.assign(hack='').set_index('hack'))
+
+    with col3:
+        st.markdown('#### Our methods to estimate vaccine milestone:')
+        st.markdown('1. For 1st dose targets, we use 7-day MA of 1st dose rate.')
+        st.markdown('2. For 2nd dose targets, we calculate two dates: a) 7-day MA of 2nd dose rate, and b) "follow 1st dose" days. The idea with b) is that we assume the time taken to get from a given coverage level to any target in 1st dose is the same for 2nd dose. For example, if a state is currently at 63.7% 2nd dose and we want to estimate how long it will take to reach 80%, we will look at how long does it take for that state to get from 63.7% to 80% 1st dose. We will then use this interval as an estimate for 2nd dose.')
+        st.markdown('3. Should the jurisdiction has not reached the 1st dose target, then we estimate when the jurisdiction will get to that target using 7-day MA of 1st dose rate.')
+        st.markdown('4. We present both these numbers together. If they differ, we assume that the actual date of reaching the target will be somewhere between the two dates.')
+        st.markdown('5. The rule of thumb is that if the vaccination growth rate is picking up, then it will be closer to the 7-day MA dates. Conversely, if the vaccination growth rate is slowing down, then it will be closer to the "follow 1st dose" date.')
+        st.markdown('6. The chequered flag 🏁 indicates that the target has been reached.')
+        st.markdown('7. No approach is perfect -- our estimate is dynamic and will be updated daily. However, by giving an interval of dates, we hope that viewers will appreciate the difficulty in predicting the future. We do expect the interval between two dates will shrink as we get closer to the target.')
 
     st.markdown("#### Vaccination milestone for 16+")
     col1, col2, col3 = st.columns(3)
@@ -291,7 +303,6 @@ def main():
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar':False})
 
     ############# ETA CHARTS ###############
-
 
     st.subheader('Notes')
     st.markdown('1. My source data is from https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf, extracted from [WA Health](https://www.wa.gov.au/sites/default/files/2021-06/COVID-19-Vaccination-Dashboard-Guide-for-Interpretation.pdf) (second dose by state data prior to 1st July 2021) and [Department of Health](https://www.health.gov.au/using-our-websites/copyright) (all other data) by [Ken Tsang](https://github.com/jxeeno/aust-govt-covid19-vaccine-pdf). I might have modified the data to correct any mistakes or errors I perceive or notice. Population data is from [ABS](https://www.abs.gov.au/statistics/people/population/national-state-and-territory-population/sep-2020/31010do002_202009.xls).')

@@ -7,8 +7,7 @@ import sys
 import os
 import streamlit as st
 import config
-
-import matplotlib.pyplot as plt
+import math
 
 from IPython.core.interactiveshell import InteractiveShell
 InteractiveShell.ast_node_interactivity = "all"
@@ -202,6 +201,7 @@ def extra_calculation(a):
     # eta to hit double-vaxx at 70 and 80% rate using MA calculation
     a['eta_dose2_70'] = (0.7 * a['abspop_jun2020'] - a['dose2_cnt']) / a['ma7_dose2']
     a['eta_dose2_80'] = (0.8 * a['abspop_jun2020'] - a['dose2_cnt']) / a['ma7_dose2']
+    a['eta_dose2_90'] = (0.9 * a['abspop_jun2020'] - a['dose2_cnt']) / a['ma7_dose2']
     a['eta_dose2_95'] = (0.95 * a['abspop_jun2020'] - a['dose2_cnt']) / a['ma7_dose2']
 
 
@@ -215,6 +215,7 @@ def extra_calculation(a):
 
     a['eta_dose1_70'] = (0.7 * a['abspop_jun2020'] - a['dose1_cnt']) / a['ma7_dose1']
     a['eta_dose1_80'] = (0.8 * a['abspop_jun2020'] - a['dose1_cnt']) / a['ma7_dose1']
+    a['eta_dose1_90'] = (0.9 * a['abspop_jun2020'] - a['dose1_cnt']) / a['ma7_dose1']
     a['eta_dose1_95'] = (0.95 * a['abspop_jun2020'] - a['dose1_cnt']) / a['ma7_dose1']
 
     return a
@@ -321,6 +322,49 @@ def find_first(df, state, target, col='dose1_pct', ag='16_or_above'):
 
     return date
 
+def predict_target_date_1stdose(x, t):
+    # Return the date a jurisdiction reaches the first-dose target
+    # t is the dose target
+    if x[x['dose1_pct'] > t].shape[0] > 0:
+        first_date_reach_target = x[x['dose1_pct'] > t]['date'].min()
+        return first_date_reach_target.date().strftime('%d %b %Y') + '🏁'
+
+    # otherwise, we estimate the target
+    else:
+        straight_eta1_togo = math.ceil(x['eta_dose1_'+str(t)].tail(1).item())
+        straight_eta1_proj_date = (x['date'].max() + datetime.timedelta(days=straight_eta1_togo)).date()
+
+        return straight_eta1_proj_date.strftime('%d %b %Y')
+
+
+def predict_target_date(x, t):
+    # Return the date a jurisdiction reaches the double-dose target
+    # t is the double dose target
+    if x[x['dose2_pct'] > t].shape[0] > 0:
+        first_date_reach_target = x[x['dose2_pct'] > t]['date'].min()
+        return first_date_reach_target.date().strftime('%d %b %Y') + '🏁'
+
+    # otherwise, we estimate the target
+    else:
+        straight_eta2_togo = math.ceil(x['eta_dose2_'+str(t)].tail(1).item())
+        straight_eta2_proj_date = (x['date'].max() + datetime.timedelta(days=straight_eta2_togo)).date()
+
+        cur2nd = x['dose2_pct'].max()
+        cur2nd_dose1date = x[x['dose1_pct'] > cur2nd]['date'].min()
+
+        # we don't know when the 1st target will hit, so use the eta to target
+        if x['dose1_pct'].max() < t:
+            straight_eta1_togo = math.ceil(x['eta_dose1_'+str(t)].tail(1).item())
+            target1stdate = x['date'].max() + datetime.timedelta(days=straight_eta1_togo)
+        else:
+            target1stdate = x[x['dose1_pct'] >= t]['date'].min()
+
+        follow_dose1_proj_date = (x['date'].max() + (target1stdate - cur2nd_dose1date)).date()
+
+        if straight_eta2_proj_date != follow_dose1_proj_date:
+            return ' to '.join(map(lambda x: x.strftime('%d %b %Y'), sorted([straight_eta2_proj_date, follow_dose1_proj_date])))
+        else:
+            return follow_dose1_proj_date.strftime('%d %b %Y')
 
 @st.cache(suppress_st_warning=True, ttl=300)
 def processing_data():
